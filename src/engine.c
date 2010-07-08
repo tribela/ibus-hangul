@@ -350,6 +350,11 @@ ibus_hangul_engine_update_preedit_text (IBusHangulEngine *hangul)
     ustring_append_ucs4 (preedit, hic_preedit, -1);
 
     if (ustring_length(preedit) > 0) {
+	IBusPreeditFocusMode preedit_option = IBUS_ENGINE_PREEDIT_COMMIT;
+
+	if (hangul->hanja_list != NULL)
+	    preedit_option = IBUS_ENGINE_PREEDIT_CLEAR;
+
         text = ibus_text_new_from_ucs4 ((gunichar*)preedit->data);
         // ibus-hangul's internal preedit string
         ibus_text_append_attribute (text, IBUS_ATTR_TYPE_UNDERLINE,
@@ -364,7 +369,7 @@ ibus_hangul_engine_update_preedit_text (IBusHangulEngine *hangul)
                                                    text,
                                                    ibus_text_get_length (text),
                                                    TRUE,
-                                                   IBUS_ENGINE_PREEDIT_COMMIT);
+                                                   preedit_option);
     } else {
         text = ibus_text_new_from_static_string ("");
         ibus_engine_update_preedit_text ((IBusEngine *)hangul, text, 0, FALSE);
@@ -500,6 +505,9 @@ ibus_hangul_engine_update_lookup_table (IBusHangulEngine *hangul)
     ibus_hangul_engine_update_hanja_list (hangul);
 
     if (hangul->hanja_list != NULL) {
+	// We should redraw preedit text with IBUS_ENGINE_PREEDIT_CLEAR option
+	// here to prevent committing it on focus out event incidentally.
+	ibus_hangul_engine_update_preedit_text (hangul);
         ibus_hangul_engine_apply_hanja_list (hangul);
     } else {
         ibus_hangul_engine_hide_lookup_table (hangul);
@@ -513,6 +521,12 @@ ibus_hangul_engine_process_candidate_key_event (IBusHangulEngine    *hangul,
 {
     if (keyval == IBUS_Escape) {
         ibus_hangul_engine_hide_lookup_table (hangul);
+	// When the lookup table is poped up, preedit string is 
+	// updated with IBUS_ENGINE_PREEDIT_CLEAR option.
+	// So, when focus is out, the preedit text will not be committed.
+	// To prevent this problem, we have to update preedit text here
+	// with IBUS_ENGINE_PREEDIT_COMMIT option.
+	ibus_hangul_engine_update_preedit_text (hangul);
         return TRUE;
     } else if (keyval == IBUS_Return) {
         ibus_hangul_engine_commit_current_candidate (hangul);
@@ -754,9 +768,7 @@ ibus_hangul_engine_flush (IBusHangulEngine *hangul)
     str = ustring_begin (hangul->preedit);
     text = ibus_text_new_from_ucs4 (str);
 
-    ibus_engine_hide_preedit_text ((IBusEngine *) hangul);
-    // Use ibus_engine_update_preedit_text_with_mode instead.
-    //ibus_engine_commit_text ((IBusEngine *) hangul, text);
+    ibus_engine_commit_text ((IBusEngine *) hangul, text);
 
     ustring_clear(hangul->preedit);
 }
@@ -774,6 +786,8 @@ ibus_hangul_engine_focus_in (IBusEngine *engine)
 
     ibus_engine_register_properties (engine, hangul->prop_list);
 
+    ibus_hangul_engine_update_preedit_text (hangul);
+
     if (hangul->hanja_list != NULL) {
         ibus_hangul_engine_update_lookup_table_ui (hangul);
     }
@@ -787,7 +801,11 @@ ibus_hangul_engine_focus_out (IBusEngine *engine)
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
     if (hangul->hanja_list == NULL) {
-        ibus_hangul_engine_flush (hangul);
+	// ibus-hangul uses
+	// ibus_engine_update_preedit_text_with_mode() function which makes
+	// the preedit string committed automatically when the focus is out.
+	// So we don't need to commit the preedit here.
+	hangul_ic_reset (hangul->context);
     } else {
         ibus_engine_hide_lookup_table (engine);
         ibus_engine_hide_auxiliary_text (engine);
