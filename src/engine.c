@@ -762,15 +762,16 @@ ibus_hangul_engine_flush (IBusHangulEngine *hangul)
 
     ustring_append_ucs4 (hangul->preedit, str, -1);
 
-    if (ustring_length (hangul->preedit) == 0)
-        return;
+    if (ustring_length (hangul->preedit) != 0) {
+	str = ustring_begin (hangul->preedit);
+	text = ibus_text_new_from_ucs4 (str);
 
-    str = ustring_begin (hangul->preedit);
-    text = ibus_text_new_from_ucs4 (str);
+	ibus_engine_commit_text ((IBusEngine *) hangul, text);
 
-    ibus_engine_commit_text ((IBusEngine *) hangul, text);
+	ustring_clear(hangul->preedit);
+    }
 
-    ustring_clear(hangul->preedit);
+    ibus_hangul_engine_update_preedit_text (hangul);
 }
 
 static void
@@ -820,9 +821,6 @@ ibus_hangul_engine_reset (IBusEngine *engine)
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
     ibus_hangul_engine_flush (hangul);
-    if (hangul->hanja_list != NULL) {
-        ibus_hangul_engine_hide_lookup_table (hangul);
-    }
     parent_class->reset (engine);
 }
 
