@@ -16,6 +16,8 @@
 typedef struct _IBusHangulEngine IBusHangulEngine;
 typedef struct _IBusHangulEngineClass IBusHangulEngineClass;
 
+typedef struct _HanjaKeyList HanjaKeyList;
+
 struct _IBusHangulEngine {
     IBusEngine parent;
 
@@ -39,6 +41,11 @@ struct _IBusHangulEngineClass {
 struct KeyEvent {
     guint keyval;
     guint modifiers;
+};
+
+struct _HanjaKeyList {
+    guint   all_modifiers;
+    GArray *keys;
 };
 
 /* functions prototype */
@@ -112,18 +119,29 @@ static void        lookup_table_set_visible (IBusLookupTable        *table,
 static gboolean        lookup_table_is_visible
                                             (IBusLookupTable        *table);
 
-static void     key_event_list_set          (GArray                 *list,
-                                             const gchar            *str);
 static gboolean key_event_list_match        (GArray                 *list,
                                              guint                   keyval,
                                              guint                   modifiers);
+
+static void     hanja_key_list_init         (HanjaKeyList           *list);
+static void     hanja_key_list_fini         (HanjaKeyList           *list);
+static void     hanja_key_list_set_from_string(HanjaKeyList         *list,
+                                             const char             *str);
+static void     hanja_key_list_append       (HanjaKeyList           *list,
+                                             guint                   keyval,
+                                             guint                   modifiers);
+static gboolean hanja_key_list_match        (HanjaKeyList           *list,
+                                             guint                   keyval,
+                                             guint                   modifiers);
+static gboolean hanja_key_list_has_modifier (HanjaKeyList           *list,
+                                             guint                   keyval);
 
 static IBusEngineClass *parent_class = NULL;
 static HanjaTable *hanja_table = NULL;
 static HanjaTable *symbol_table = NULL;
 static IBusConfig *config = NULL;
 static GString    *hangul_keyboard = NULL;
-static GArray     *hanja_keys = NULL;
+static HanjaKeyList hanja_keys;
 static int lookup_table_orientation = 0;
 
 GType
@@ -176,29 +194,25 @@ ibus_hangul_init (IBusBus *bus)
         g_value_unset(&value);
     }
 
-    hanja_keys = g_array_sized_new(FALSE, TRUE, sizeof(struct KeyEvent), 4);
+    hanja_key_list_init(&hanja_keys);
+
     res = ibus_config_get_value (config, "engine/Hangul",
                                          "HanjaKeys", &value);
     if (res) {
         const gchar* str = g_value_get_string (&value);
-        key_event_list_set(hanja_keys, str);
+        hanja_key_list_set_from_string(&hanja_keys, str);
         g_value_unset(&value);
     } else {
-        struct KeyEvent ev;
-
-        ev.keyval = IBUS_Hangul_Hanja;
-        ev.modifiers = 0;
-        g_array_append_val(hanja_keys, ev);
-
-        ev.keyval = IBUS_F9;
-        ev.modifiers = 0;
-        g_array_append_val(hanja_keys, ev);
+	hanja_key_list_append(&hanja_keys, IBUS_Hangul_Hanja, 0);
+	hanja_key_list_append(&hanja_keys, IBUS_F9, 0);
     }
 }
 
 void
 ibus_hangul_exit (void)
 {
+    hanja_key_list_fini(&hanja_keys);
+
     hanja_table_delete (hanja_table);
     hanja_table = NULL;
 
@@ -660,11 +674,14 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 {
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
+    guint mask;
     gboolean retval;
     const ucschar *str;
 
     if (modifiers & IBUS_RELEASE_MASK)
         return FALSE;
+
+    g_print("modifiers: %x\n", modifiers);
 
     // if we don't ignore shift keys, shift key will make flush the preedit 
     // string. So you cannot input shift+key.
@@ -674,7 +691,17 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (keyval == IBUS_Shift_L || keyval == IBUS_Shift_R)
         return FALSE;
 
-    if (key_event_list_match(hanja_keys, keyval, modifiers)) {
+    // If hanja key has any modifiers, we ignore that modifier keyval,
+    // or we cannot make the hanja key work.
+    // Because when we get the modifier key alone, we commit the
+    // current preedit string. So after that, even if we get the
+    // right hanja key event, we don't have preedit string to be changed
+    // to hanja word.
+    // See this bug: http://code.google.com/p/ibus/issues/detail?id=1036
+    if (hanja_key_list_has_modifier(&hanja_keys, keyval))
+	return FALSE; 
+
+    if (hanja_key_list_match(&hanja_keys, keyval, modifiers)) {
         if (hangul->hanja_list == NULL) {
             ibus_hangul_engine_update_lookup_table (hangul);
         } else {
@@ -682,9 +709,6 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         }
         return TRUE;
     }
-
-    if (modifiers & (IBUS_CONTROL_MASK | IBUS_MOD1_MASK))
-        return FALSE;
 
     if (hangul->hanja_list != NULL) {
         retval = ibus_hangul_engine_process_candidate_key_event (hangul,
@@ -697,9 +721,23 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         }
     }
 
+    // if we've got a key event with modifiers, commit current
+    // preedit string and ignore this key event.
+    // So, if you want to add some key event handler, put it 
+    // before this code.
+    // Omit shift, capslock, numlock and xkb modifiers.
+    mask = IBUS_MODIFIER_MASK &
+	   ~(IBUS_SHIFT_MASK | IBUS_LOCK_MASK | IBUS_MOD2_MASK);
+    if (modifiers & mask) {
+        ibus_hangul_engine_flush (hangul);
+        return FALSE;
+    }
+
     if (keyval == IBUS_BackSpace) {
         retval = hangul_ic_backspace (hangul->context);
     } else {
+	g_print("keyval: %x, keycode: %x\n", keyval, keycode);
+
         // ignore capslock
         if (modifiers & IBUS_LOCK_MASK) {
             if (keyval >= 'A' && keyval <= 'z') {
@@ -927,7 +965,7 @@ ibus_config_value_changed (IBusConfig   *config,
             hangul_ic_select_keyboard (hangul->context, hangul_keyboard->str);
         } else if (strcmp(name, "HanjaKeys") == 0) {
             const gchar* str = g_value_get_string (value);
-            key_event_list_set(hanja_keys, str);
+	    hanja_key_list_set_from_string(&hanja_keys, str);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup_table_orientation") == 0) {
@@ -950,26 +988,10 @@ lookup_table_is_visible (IBusLookupTable *table)
 }
 
 static void
-key_event_list_set (GArray* list, const char* str)
+key_event_list_append(GArray* list, guint keyval, guint modifiers)
 {
-    gchar** items = g_strsplit(str, ",", 0);
-
-    g_array_set_size(list, 0);
-
-    if (items != NULL) {
-        int i;
-        for (i = 0; items[i] != NULL; ++i) {
-            guint keyval = 0;
-            guint modifiers = 0;
-            gboolean res;
-            res = ibus_key_event_from_string(items[i], &keyval, &modifiers);
-            if (res) {
-                struct KeyEvent ev = { keyval, modifiers };
-                g_array_append_val(list, ev);
-            }
-        }
-        g_strfreev(items);
-    }
+    struct KeyEvent ev = { keyval, modifiers};
+    g_array_append_val(list, ev);
 }
 
 static gboolean
@@ -1018,4 +1040,91 @@ ibus_hangul_engine_candidate_clicked (IBusEngine     *engine,
     } else {
 	ibus_hangul_engine_hide_lookup_table (hangul);
     }
+}
+
+static void
+hanja_key_list_init(HanjaKeyList* list)
+{
+    list->all_modifiers = 0;
+    list->keys = g_array_sized_new(FALSE, TRUE, sizeof(struct KeyEvent), 4);
+}
+
+static void
+hanja_key_list_fini(HanjaKeyList* list)
+{
+    g_array_free(list->keys, TRUE);
+}
+
+static void
+hanja_key_list_append_from_string(HanjaKeyList *list, const char* str)
+{
+    guint keyval = 0;
+    guint modifiers = 0;
+    gboolean res;
+
+    res = ibus_key_event_from_string(str, &keyval, &modifiers);
+    if (res) {
+	hanja_key_list_append(list, keyval, modifiers);
+    }
+}
+
+static void
+hanja_key_list_append(HanjaKeyList *list, guint keyval, guint modifiers)
+{
+    list->all_modifiers |= modifiers;
+    key_event_list_append(list->keys, keyval, modifiers);
+}
+
+static void
+hanja_key_list_set_from_string(HanjaKeyList *list, const char* str)
+{
+    gchar** items = g_strsplit(str, ",", 0);
+
+    list->all_modifiers = 0;
+    g_array_set_size(list->keys, 0);
+
+    if (items != NULL) {
+        int i;
+        for (i = 0; items[i] != NULL; ++i) {
+	    hanja_key_list_append_from_string(list, items[i]);
+        }
+        g_strfreev(items);
+    }
+}
+
+static gboolean
+hanja_key_list_match(HanjaKeyList* list, guint keyval, guint modifiers)
+{
+    return key_event_list_match(list->keys, keyval, modifiers);
+}
+
+static gboolean
+hanja_key_list_has_modifier(HanjaKeyList* list, guint keyval)
+{
+    if (list->all_modifiers & IBUS_CONTROL_MASK) {
+	if (keyval == IBUS_Control_L || keyval == IBUS_Control_R)
+	    return TRUE;
+    }
+
+    if (list->all_modifiers & IBUS_MOD1_MASK) {
+	if (keyval == IBUS_Alt_L || keyval == IBUS_Alt_R)
+	    return TRUE;
+    }
+
+    if (list->all_modifiers & IBUS_SUPER_MASK) {
+	if (keyval == IBUS_Super_L || keyval == IBUS_Super_R)
+	    return TRUE;
+    }
+
+    if (list->all_modifiers & IBUS_HYPER_MASK) {
+	if (keyval == IBUS_Hyper_L || keyval == IBUS_Hyper_R)
+	    return TRUE;
+    }
+
+    if (list->all_modifiers & IBUS_META_MASK) {
+	if (keyval == IBUS_Meta_L || keyval == IBUS_Meta_R)
+	    return TRUE;
+    }
+
+    return FALSE;
 }
