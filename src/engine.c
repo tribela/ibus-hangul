@@ -681,8 +681,6 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (modifiers & IBUS_RELEASE_MASK)
         return FALSE;
 
-    g_print("modifiers: %x\n", modifiers);
-
     // if we don't ignore shift keys, shift key will make flush the preedit 
     // string. So you cannot input shift+key.
     // Let's think about these examples:
@@ -736,8 +734,6 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (keyval == IBUS_BackSpace) {
         retval = hangul_ic_backspace (hangul->context);
     } else {
-	g_print("keyval: %x, keycode: %x\n", keyval, keycode);
-
         // ignore capslock
         if (modifiers & IBUS_LOCK_MASK) {
             if (keyval >= 'A' && keyval <= 'z') {
