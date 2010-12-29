@@ -143,6 +143,7 @@ static IBusConfig *config = NULL;
 static GString    *hangul_keyboard = NULL;
 static HanjaKeyList hanja_keys;
 static int lookup_table_orientation = 0;
+static IBusKeymap *keymap = NULL;
 
 GType
 ibus_hangul_engine_get_type (void)
@@ -206,11 +207,18 @@ ibus_hangul_init (IBusBus *bus)
 	hanja_key_list_append(&hanja_keys, IBUS_Hangul_Hanja, 0);
 	hanja_key_list_append(&hanja_keys, IBUS_F9, 0);
     }
+
+    keymap = ibus_keymap_get("us");
 }
 
 void
 ibus_hangul_exit (void)
 {
+    if (keymap != NULL) {
+	g_object_unref(keymap);
+	keymap = NULL;
+    }
+
     hanja_key_list_fini(&hanja_keys);
 
     hanja_table_delete (hanja_table);
@@ -734,6 +742,14 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (keyval == IBUS_BackSpace) {
         retval = hangul_ic_backspace (hangul->context);
     } else {
+	// We need to normalize the keyval to US qwerty keylayout,
+	// because the korean input method is depend on the position of
+	// each key, not the character. We make the keyval from keycode
+	// as if the keyboard is US qwerty layout. Then we can assume the
+	// keyval represent the position of the each key.
+	if (keymap != NULL)
+	    keyval = ibus_keymap_lookup_keysym(keymap, keycode, modifiers);
+
         // ignore capslock
         if (modifiers & IBUS_LOCK_MASK) {
             if (keyval >= 'A' && keyval <= 'z') {
