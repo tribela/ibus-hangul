@@ -747,8 +747,10 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 	// each key, not the character. We make the keyval from keycode
 	// as if the keyboard is US qwerty layout. Then we can assume the
 	// keyval represent the position of the each key.
-	if (keymap != NULL)
-	    keyval = ibus_keymap_lookup_keysym(keymap, keycode, modifiers);
+	if (strcmp(hangul_keyboard->str, "ro") != 0) {
+	    if (keymap != NULL)
+		keyval = ibus_keymap_lookup_keysym(keymap, keycode, modifiers);
+	}
 
         // ignore capslock
         if (modifiers & IBUS_LOCK_MASK) {
