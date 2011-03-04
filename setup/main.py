@@ -29,20 +29,17 @@ import config
 import subprocess
 from keycapturedialog import KeyCaptureDialog
 
-_ = lambda a : gettext.dgettext("ibus-hangul", a)
+_ = lambda a : gettext.dgettext(config.gettext_package, a)
 
 class Setup ():
     def __init__ (self):
-	locale.bindtextdomain("ibus-hangul", config.localedir)
-	locale.bind_textdomain_codeset("ibus-hangul", "UTF-8")
-
         self.__bus = ibus.Bus()
         self.__config = self.__bus.get_config()
 	self.__config.connect("value-changed", self.on_value_changed, None)
 
 	ui_file = os.path.join(os.path.dirname(__file__), "setup.ui")
 	self.__builder = gtk.Builder()
-	self.__builder.set_translation_domain("ibus-hangul")
+	self.__builder.set_translation_domain(config.gettext_package)
 	self.__builder.add_from_file(ui_file)
 
 	# Hangul tab
@@ -183,5 +180,7 @@ class Setup ():
         return self.__config.set_value("engine/Hangul", name, v)
 
 if __name__ == "__main__":
-    gettext.bindtextdomain("ibus-hangul", config.localedir)
+    locale.bindtextdomain(config.gettext_package, config.localedir)
+    locale.bind_textdomain_codeset(config.gettext_package, "UTF-8")
+
     Setup().run()
