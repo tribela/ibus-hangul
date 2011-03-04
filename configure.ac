@@ -84,7 +84,6 @@ src/Makefile
 src/hangul.xml.in
 setup/Makefile
 setup/ibus-setup-hangul
-setup/config.py
 icons/Makefile
 data/Makefile
 m4/Makefile

@@ -46,7 +46,7 @@ class Setup ():
 	self.__builder.add_from_file(ui_file)
 
 	# Hangul tab
-	pipe = subprocess.Popen([config.setupdir + '/hangul_keyboard_list'], stdout = subprocess.PIPE)
+	pipe = subprocess.Popen([config.setuplibdir + '/hangul_keyboard_list'], stdout = subprocess.PIPE)
 	list = pipe.communicate()[0].split('\n')
 	
 	self.__hangul_keyboard = self.__builder.get_object("HangulKeyboard")
@@ -100,7 +100,7 @@ class Setup ():
 
 	# setup dialog
 	self.__window = self.__builder.get_object("SetupDialog")
-	icon_file = os.path.join(config.datadir, "ibus-hangul", "icons", "ibus-hangul.svg")
+	icon_file = os.path.join(config.pkgdatadir, "icons", "ibus-hangul.svg")
 	self.__window.set_icon_from_file(icon_file)
 	self.__window.connect("response", self.on_response, None)
 	self.__window.show()

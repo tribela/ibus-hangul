@@ -19,6 +19,7 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 setup_hangul_PYTHON = \
+	config.py \
 	main.py \
 	keycapturedialog.py \
 	setup.ui \
@@ -26,11 +27,12 @@ setup_hangul_PYTHON = \
 
 nodist_setup_hangul_PYTHON = config.py
 
-setup_hanguldir = $(datadir)/ibus-hangul/setup
+setup_hanguldir = $(pkgdatadir)/setup
 
 libexec_SCRIPTS = ibus-setup-hangul
 
-setup_hangul_PROGRAMS = hangul_keyboard_list
+setuplibdir = $(pkglibdir)/setup
+setuplib_PROGRAMS = hangul_keyboard_list
 
 hangul_keyboard_list_SOURCES = hangul_keyboard_list.c
 hangul_keyboard_list_CFLAGS = $(HANGUL_CFLAGS)
@@ -38,10 +40,12 @@ hangul_keyboard_list_LDADD = $(HANGUL_LIBS)
 
 
 CLEANFILES = \
+	config.py \
 	*.pyc \
 	$(NULL)
 
 EXTRA_DIST = \
+	config.py.in \
 	ibus-setup-hangul.in \
 	$(NULL)
 
@@ -50,3 +54,9 @@ test:
 	       PYTHONPATH=$(abs_top_srcdir):$(pyexecdir) \
 	       $(PYTHON) $(srcdir)/main.py
 
+config.py: config.py.in Makefile
+	sed -e 's&@SETUP_LOCALEDIR@&$(localedir)&g' \
+	    -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' \
+	    -e 's&@SETUP_PKGLIBDIR@&$(pkglibdir)&g' $< > $@
+
+ibus-setup-hangul: config.py

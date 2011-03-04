@@ -18,7 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-prefix = "@prefix@"
-datadir = "@prefix@/share"
-localedir = "@prefix@/share/locale"
-setupdir = datadir + "/ibus-hangul/setup"
+localedir = '@SETUP_LOCALEDIR@'
+pkgdatadir = '@SETUP_PKGDATADIR@'
+pkglibdir = '@SETUP_PKGLIBDIR@'
+setupdatadir = pkgdatadir + '/setup'
+setuplibdir = pkglibdir + '/setup'
