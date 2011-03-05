@@ -83,7 +83,6 @@ ibus-hangul.spec
 src/Makefile
 src/hangul.xml.in
 setup/Makefile
-setup/ibus-setup-hangul
 icons/Makefile
 data/Makefile
 m4/Makefile

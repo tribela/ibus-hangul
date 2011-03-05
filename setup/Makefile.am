@@ -40,6 +40,7 @@ hangul_keyboard_list_LDADD = $(HANGUL_LIBS)
 
 
 CLEANFILES = \
+	ibus-setup-hangul \
 	config.py \
 	*.pyc \
 	$(NULL)
@@ -60,4 +61,5 @@ config.py: config.py.in Makefile
 	    -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' \
 	    -e 's&@SETUP_PKGLIBDIR@&$(pkglibdir)&g' $< > $@
 
-ibus-setup-hangul: config.py
+ibus-setup-hangul: ibus-setup-hangul.in config.py Makefile
+	sed -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' $< > $@
