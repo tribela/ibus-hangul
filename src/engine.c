@@ -746,13 +746,13 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         }
     }
 
-    // if we've got a key event with modifiers, commit current
+    // If we've got a key event with some modifiers, commit current
     // preedit string and ignore this key event.
     // So, if you want to add some key event handler, put it 
     // before this code.
-    // Omit shift, capslock, numlock and xkb modifiers.
-    mask = IBUS_MODIFIER_MASK &
-	   ~(IBUS_SHIFT_MASK | IBUS_LOCK_MASK | IBUS_MOD2_MASK);
+    // Ignore key event with control, alt, super or mod5
+    mask = IBUS_CONTROL_MASK |
+	    IBUS_MOD1_MASK | IBUS_MOD3_MASK | IBUS_MOD4_MASK | IBUS_MOD5_MASK;
     if (modifiers & mask) {
         ibus_hangul_engine_flush (hangul);
         return FALSE;
