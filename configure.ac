@@ -57,7 +57,7 @@ PKG_CHECK_MODULES(IBUS, [
 
 # check libhangul
 PKG_CHECK_MODULES(HANGUL, [
-    libhangul >= 0.0.12
+    libhangul >= 0.1.0
 ])
 
 # check env

@@ -766,7 +766,11 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 	// each key, not the character. We make the keyval from keycode
 	// as if the keyboard is US qwerty layout. Then we can assume the
 	// keyval represent the position of the each key.
-	if (strcmp(hangul_keyboard->str, "ro") != 0) {
+	// But if the hic is in transliteration mode, then we should not
+	// normalize the keyval.
+	bool is_transliteration_mode =
+		 hangul_ic_is_transliteration(hangul->context);
+	if (!is_transliteration_mode) {
 	    if (keymap != NULL)
 		keyval = ibus_keymap_lookup_keysym(keymap, keycode, modifiers);
 	}
