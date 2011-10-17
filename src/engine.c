@@ -130,7 +130,7 @@ static void ibus_hangul_engine_update_lookup_table
 static void ibus_config_value_changed       (IBusConfig             *config,
                                              const gchar            *section,
                                              const gchar            *name,
-                                             GValue                 *value,
+                                             GVariant               *value,
                                              gpointer                user_data);
 
 static void        lookup_table_set_visible (IBusLookupTable        *table,
@@ -989,23 +989,23 @@ static void
 ibus_config_value_changed (IBusConfig   *config,
                            const gchar  *section,
                            const gchar  *name,
-                           GValue       *value,
+                           GVariant     *value,
                            gpointer      user_data)
 {
     IBusHangulEngine *hangul = (IBusHangulEngine *) user_data;
 
     if (strcmp(section, "engine/Hangul") == 0) {
         if (strcmp(name, "HangulKeyboard") == 0) {
-            const gchar *str = g_value_get_string (value);
+            const gchar *str = g_variant_get_string(value, NULL);
             g_string_assign (hangul_keyboard, str);
             hangul_ic_select_keyboard (hangul->context, hangul_keyboard->str);
         } else if (strcmp(name, "HanjaKeys") == 0) {
-            const gchar* str = g_value_get_string (value);
+            const gchar* str = g_variant_get_string(value, NULL);
 	    hanja_key_list_set_from_string(&hanja_keys, str);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup_table_orientation") == 0) {
-            lookup_table_orientation = g_value_get_int (value);
+            lookup_table_orientation = g_variant_get_int32(value);
         }
     }
 }
