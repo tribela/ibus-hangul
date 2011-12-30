@@ -854,9 +854,9 @@ ibus_hangul_engine_focus_in (IBusEngine *engine)
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
     if (hangul->hanja_mode) {
-        hangul->prop_hanja_mode->state = PROP_STATE_CHECKED;
+        ibus_property_set_state (hangul->prop_hanja_mode, PROP_STATE_CHECKED);
     } else {
-        hangul->prop_hanja_mode->state = PROP_STATE_UNCHECKED;
+        ibus_property_set_state (hangul->prop_hanja_mode, PROP_STATE_UNCHECKED);
     }
 
     ibus_engine_register_properties (engine, hangul->prop_list);
@@ -975,9 +975,11 @@ ibus_hangul_engine_property_activate (IBusEngine    *engine,
 
         hangul->hanja_mode = !hangul->hanja_mode;
         if (hangul->hanja_mode) {
-            hangul->prop_hanja_mode->state = PROP_STATE_CHECKED;
+            ibus_property_set_state (hangul->prop_hanja_mode,
+                    PROP_STATE_CHECKED);
         } else {
-            hangul->prop_hanja_mode->state = PROP_STATE_UNCHECKED;
+            ibus_property_set_state (hangul->prop_hanja_mode,
+                    PROP_STATE_UNCHECKED);
         }
 
         ibus_engine_update_property (engine, hangul->prop_hanja_mode);
