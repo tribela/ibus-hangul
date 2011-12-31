@@ -957,19 +957,10 @@ ibus_hangul_engine_property_activate (IBusEngine    *engine,
     if (strcmp(prop_name, "setup") == 0) {
         GError *error = NULL;
         gchar *argv[2] = { NULL, };
-        gchar *path;
-        const char* libexecdir;
 
-        libexecdir = g_getenv("LIBEXECDIR");
-        if (libexecdir == NULL)
-            libexecdir = LIBEXECDIR;
-
-        path = g_build_filename(libexecdir, "ibus-setup-hangul", NULL);
-        argv[0] = path;
+        argv[0] = "ibus-setup-hangul";
         argv[1] = NULL;
-        g_spawn_async (NULL, argv, NULL, 0, NULL, NULL, NULL, &error);
-
-        g_free(path);
+        g_spawn_async (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error);
     } else if (strcmp(prop_name, "hanja_mode") == 0) {
         IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
