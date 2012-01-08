@@ -46,6 +46,7 @@ struct _IBusHangulEngine {
     gboolean hangul_mode;
     gboolean hanja_mode;
     HanjaList* hanja_list;
+    int last_lookup_method;
 
     IBusLookupTable *table;
 
@@ -326,6 +327,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     hangul->hanja_list = NULL;
     hangul->hangul_mode = TRUE;
     hangul->hanja_mode = FALSE;
+    hangul->last_lookup_method = LOOKUP_METHOD_PREFIX;
 
     hangul->prop_list = ibus_prop_list_new ();
     g_object_ref_sink (hangul->prop_list);
@@ -497,25 +499,48 @@ ibus_hangul_engine_commit_current_candidate (IBusHangulEngine *hangul)
     preedit_len = ustring_length(hangul->preedit);
     hic_preedit_len = ucschar_strlen (hic_preedit);
 
-    /* remove hic preedit text */
-    if (hic_preedit_len > 0) {
-        hangul_ic_reset (hangul->context);
-        key_len -= hic_preedit_len;
-    }
+    if (hangul->last_lookup_method == LOOKUP_METHOD_PREFIX) {
+        if (preedit_len == 0 && hic_preedit_len == 0) {
+            /* remove surrounding_text */
+            if (key_len > 0) {
+                ibus_engine_delete_surrounding_text ((IBusEngine *)hangul,
+                        -key_len , key_len);
+            }
+        } else {
+            /* remove ibus preedit text */
+            if (key_len > 0) {
+                glong n = MIN(key_len, preedit_len);
+                ustring_erase (hangul->preedit, 0, n);
+                key_len -= preedit_len;
+            }
 
-    /* remove ibus preedit text */
-    if (key_len > preedit_len) {
-        ustring_erase (hangul->preedit, 0, preedit_len);
-        key_len -= preedit_len;
-    } else if (key_len > 0) {
-        ustring_erase (hangul->preedit, 0, key_len);
-        key_len = 0;
-    }
+            /* remove hic preedit text */
+            if (key_len > 0) {
+                hangul_ic_reset (hangul->context);
+                key_len -= hic_preedit_len;
+            }
+        }
+    } else {
+        /* remove hic preedit text */
+        if (hic_preedit_len > 0) {
+            hangul_ic_reset (hangul->context);
+            key_len -= hic_preedit_len;
+        }
 
-    /* remove surrounding_text */
-    if (key_len > 0) {
-        ibus_engine_delete_surrounding_text ((IBusEngine *)hangul,
-                -key_len , key_len);
+        /* remove ibus preedit text */
+        if (key_len > preedit_len) {
+            ustring_erase (hangul->preedit, 0, preedit_len);
+            key_len -= preedit_len;
+        } else if (key_len > 0) {
+            ustring_erase (hangul->preedit, 0, key_len);
+            key_len = 0;
+        }
+
+        /* remove surrounding_text */
+        if (key_len > 0) {
+            ibus_engine_delete_surrounding_text ((IBusEngine *)hangul,
+                    -key_len , key_len);
+        }
     }
 
     /* clear preedit text before commit */
@@ -661,6 +686,7 @@ ibus_hangul_engine_update_hanja_list (IBusHangulEngine *hangul)
     if (hanja_key != NULL) {
         hangul->hanja_list = ibus_hangul_engine_lookup_hanja_table (hanja_key,
                 lookup_method);
+        hangul->last_lookup_method = lookup_method;
         g_free (hanja_key);
     }
 
