@@ -965,6 +965,16 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
                 retval = TRUE;
             }
         }
+
+        ibus_hangul_engine_update_preedit_text (hangul);
+
+        if (hangul->hanja_mode) {
+            if (ibus_hangul_engine_has_preedit (hangul)) {
+                ibus_hangul_engine_update_lookup_table (hangul);
+            } else {
+                ibus_hangul_engine_hide_lookup_table (hangul);
+            }
+        }
     } else {
 	// We need to normalize the keyval to US qwerty keylayout,
 	// because the korean input method is depend on the position of
@@ -1024,16 +1034,16 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
                 ibus_engine_commit_text (engine, text);
             }
         }
+
+        ibus_hangul_engine_update_preedit_text (hangul);
+
+        if (hangul->hanja_mode) {
+            ibus_hangul_engine_update_lookup_table (hangul);
+        }
+
+        if (!retval)
+            ibus_hangul_engine_flush (hangul);
     }
-
-    ibus_hangul_engine_update_preedit_text (hangul);
-
-    if (hangul->hanja_mode) {
-        ibus_hangul_engine_update_lookup_table (hangul);
-    }
-
-    if (!retval)
-        ibus_hangul_engine_flush (hangul);
 
     return retval;
 }
