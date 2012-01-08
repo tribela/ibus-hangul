@@ -177,7 +177,7 @@ static GString    *hangul_keyboard = NULL;
 static HanjaKeyList hanja_keys;
 static int lookup_table_orientation = 0;
 static IBusKeymap *keymap = NULL;
-static gboolean word_commit = TRUE;
+static gboolean word_commit = FALSE;
 
 static glong
 ucschar_strlen (const ucschar* str)

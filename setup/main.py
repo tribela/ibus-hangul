@@ -66,6 +66,10 @@ class Setup ():
 		self.__hangul_keyboard.set_active(i[2])
 		break
 
+	self.__word_commit = self.__builder.get_object("WordCommit")
+
+	word_commit = self.__read("WordCommit", False)
+        self.__word_commit.set_active(word_commit)
 
 	# hanja tab
 	button = self.__builder.get_object("HanjaKeyListAddButton")
@@ -115,6 +119,9 @@ class Setup ():
 	model = self.__hangul_keyboard.get_model()
 	i = self.__hangul_keyboard.get_active()
 	self.__write("HangulKeyboard", model[i][1])
+
+        word_commit = self.__word_commit.get_active()
+        self.__write("WordCommit", word_commit)
 
 	model = self.__hanja_key_list.get_model()
 	str = ""
