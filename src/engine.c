@@ -176,6 +176,7 @@ static GString    *hangul_keyboard = NULL;
 static HanjaKeyList hanja_keys;
 static int lookup_table_orientation = 0;
 static IBusKeymap *keymap = NULL;
+static gboolean word_commit = TRUE;
 
 static glong
 ucschar_strlen (const ucschar* str)
@@ -246,6 +247,13 @@ ibus_hangul_init (IBusBus *bus)
     } else {
 	hanja_key_list_append(&hanja_keys, IBUS_Hangul_Hanja, 0);
 	hanja_key_list_append(&hanja_keys, IBUS_F9, 0);
+    }
+
+    value = ibus_config_get_value (config, "engine/Hangul",
+                                         "WordCommit");
+    if (value != NULL) {
+        word_commit = g_variant_get_boolean (value);
+        g_variant_unref(value);
     }
 
     keymap = ibus_keymap_get("us");
@@ -616,7 +624,7 @@ ibus_hangul_engine_update_hanja_list (IBusHangulEngine *hangul)
 
     if (ustring_length(preedit) > 0) {
         preedit_utf8 = ustring_to_utf8 (preedit, -1);
-        if (hangul->hanja_mode) {
+        if (word_commit || hangul->hanja_mode) {
             hanja_key = preedit_utf8;
             lookup_method = LOOKUP_METHOD_PREFIX;
         } else {
@@ -924,6 +932,13 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 
     if (keyval == IBUS_BackSpace) {
         retval = hangul_ic_backspace (hangul->context);
+        if (!retval) {
+            guint preedit_len = ustring_length (hangul->preedit);
+            if (preedit_len > 0) {
+                ustring_erase (hangul->preedit, preedit_len - 1, 1);
+                retval = TRUE;
+            }
+        }
     } else {
 	// We need to normalize the keyval to US qwerty keylayout,
 	// because the korean input method is depend on the position of
@@ -949,39 +964,39 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
             }
         }
         retval = hangul_ic_process (hangul->context, keyval);
-    }
 
-    str = hangul_ic_get_commit_string (hangul->context);
-    if (hangul->hanja_mode) {
-        const ucschar* hic_preedit;
+        str = hangul_ic_get_commit_string (hangul->context);
+        if (word_commit || hangul->hanja_mode) {
+            const ucschar* hic_preedit;
 
-        hic_preedit = hangul_ic_get_preedit_string (hangul->context);
-        if (hic_preedit != NULL && hic_preedit[0] != 0) {
-            ustring_append_ucs4 (hangul->preedit, str, -1);
+            hic_preedit = hangul_ic_get_preedit_string (hangul->context);
+            if (hic_preedit != NULL && hic_preedit[0] != 0) {
+                ustring_append_ucs4 (hangul->preedit, str, -1);
+            } else {
+                IBusText *text;
+                const ucschar* preedit;
+
+                ustring_append_ucs4 (hangul->preedit, str, -1);
+                if (ustring_length (hangul->preedit) > 0) {
+                    /* clear preedit text before commit */
+                    ibus_hangul_engine_clear_preedit_text (hangul);
+
+                    preedit = ustring_begin (hangul->preedit);
+                    text = ibus_text_new_from_ucs4 ((gunichar*)preedit);
+                    ibus_engine_commit_text (engine, text);
+                }
+                ustring_clear (hangul->preedit);
+            }
         } else {
-            IBusText *text;
-            const ucschar* preedit;
+            if (str != NULL && str[0] != 0) {
+                IBusText *text;
 
-            ustring_append_ucs4 (hangul->preedit, str, -1);
-            if (ustring_length (hangul->preedit) > 0) {
                 /* clear preedit text before commit */
                 ibus_hangul_engine_clear_preedit_text (hangul);
 
-                preedit = ustring_begin (hangul->preedit);
-                text = ibus_text_new_from_ucs4 ((gunichar*)preedit);
+                text = ibus_text_new_from_ucs4 (str);
                 ibus_engine_commit_text (engine, text);
             }
-            ustring_clear (hangul->preedit);
-        }
-    } else {
-        if (str != NULL && str[0] != 0) {
-            IBusText *text;
-
-            /* clear preedit text before commit */
-            ibus_hangul_engine_clear_preedit_text (hangul);
-
-            text = ibus_text_new_from_ucs4 (str);
-            ibus_engine_commit_text (engine, text);
         }
     }
 
@@ -1190,6 +1205,8 @@ ibus_config_value_changed (IBusConfig   *config,
         } else if (strcmp(name, "HanjaKeys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hanja_key_list_set_from_string(&hanja_keys, str);
+        } else if (strcmp(name, "WordCommit") == 0) {
+            word_commit = g_variant_get_boolean (value);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup_table_orientation") == 0) {
