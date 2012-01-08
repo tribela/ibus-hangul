@@ -128,6 +128,8 @@ static void ibus_hangul_engine_candidate_clicked
                                              guint                   state);
 
 static void ibus_hangul_engine_flush        (IBusHangulEngine       *hangul);
+static void ibus_hangul_engine_clear_preedit_text
+                                            (IBusHangulEngine       *hangul);
 static void ibus_hangul_engine_update_preedit_text
                                             (IBusHangulEngine       *hangul);
 
@@ -391,6 +393,15 @@ ibus_hangul_engine_destroy (IBusHangulEngine *hangul)
 }
 
 static void
+ibus_hangul_engine_clear_preedit_text (IBusHangulEngine *hangul)
+{
+    IBusText *text;
+
+    text = ibus_text_new_from_static_string ("");
+    ibus_engine_update_preedit_text ((IBusEngine *)hangul, text, 0, FALSE);
+}
+
+static void
 ibus_hangul_engine_update_preedit_text (IBusHangulEngine *hangul)
 {
     const ucschar *hic_preedit;
@@ -499,10 +510,13 @@ ibus_hangul_engine_commit_current_candidate (IBusHangulEngine *hangul)
                 -key_len , key_len);
     }
 
-    ibus_hangul_engine_update_preedit_text (hangul);
+    /* clear preedit text before commit */
+    ibus_hangul_engine_clear_preedit_text (hangul);
 
     text = ibus_text_new_from_string (value);
     ibus_engine_commit_text ((IBusEngine *)hangul, text);
+
+    ibus_hangul_engine_update_preedit_text (hangul);
 }
 
 static gchar*
@@ -950,6 +964,9 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 
             ustring_append_ucs4 (hangul->preedit, str, -1);
             if (ustring_length (hangul->preedit) > 0) {
+                /* clear preedit text before commit */
+                ibus_hangul_engine_clear_preedit_text (hangul);
+
                 preedit = ustring_begin (hangul->preedit);
                 text = ibus_text_new_from_ucs4 ((gunichar*)preedit);
                 ibus_engine_commit_text (engine, text);
@@ -958,7 +975,12 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         }
     } else {
         if (str != NULL && str[0] != 0) {
-            IBusText *text = ibus_text_new_from_ucs4 (str);
+            IBusText *text;
+
+            /* clear preedit text before commit */
+            ibus_hangul_engine_clear_preedit_text (hangul);
+
+            text = ibus_text_new_from_ucs4 (str);
             ibus_engine_commit_text (engine, text);
         }
     }
@@ -988,6 +1010,9 @@ ibus_hangul_engine_flush (IBusHangulEngine *hangul)
     ustring_append_ucs4 (hangul->preedit, str, -1);
 
     if (ustring_length (hangul->preedit) != 0) {
+        /* clear preedit text before commit */
+        ibus_hangul_engine_clear_preedit_text (hangul);
+
 	str = ustring_begin (hangul->preedit);
 	text = ibus_text_new_from_ucs4 (str);
 
