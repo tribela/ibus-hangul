@@ -71,6 +71,10 @@ class Setup ():
 	word_commit = self.__read("WordCommit", False)
         self.__word_commit.set_active(word_commit)
 
+	self.__auto_reorder = self.__builder.get_object("AutoReorder")
+	auto_reorder = self.__read("AutoReorder", True)
+        self.__auto_reorder.set_active(auto_reorder)
+
 	# hanja tab
 	button = self.__builder.get_object("HanjaKeyListAddButton")
 	button.connect("clicked", self.on_hanja_key_add, None)

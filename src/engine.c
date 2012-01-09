@@ -138,6 +138,11 @@ static void ibus_hangul_engine_update_lookup_table
                                             (IBusHangulEngine       *hangul);
 static gboolean ibus_hangul_engine_has_preedit
                                             (IBusHangulEngine       *hangul);
+static bool ibus_hangul_engine_on_transition
+                                            (HangulInputContext     *hic,
+                                             ucschar                 c,
+                                             const ucschar          *preedit,
+                                             void                   *data);
 
 static void ibus_config_value_changed       (IBusConfig             *config,
                                              const gchar            *section,
@@ -178,6 +183,7 @@ static HanjaKeyList hanja_keys;
 static int lookup_table_orientation = 0;
 static IBusKeymap *keymap = NULL;
 static gboolean word_commit = FALSE;
+static gboolean auto_reorder = TRUE;
 
 static glong
 ucschar_strlen (const ucschar* str)
@@ -257,6 +263,12 @@ ibus_hangul_init (IBusBus *bus)
         g_variant_unref(value);
     }
 
+    value = ibus_config_get_value (config, "engine/Hangul", "AutoReorder");
+    if (value != NULL) {
+        auto_reorder = g_variant_get_boolean (value);
+        g_variant_unref (value);
+    }
+
     keymap = ibus_keymap_get("us");
 }
 
@@ -323,6 +335,9 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     IBusText* tooltip;
 
     hangul->context = hangul_ic_new (hangul_keyboard->str);
+    hangul_ic_connect_callback (hangul->context, "transition",
+                                ibus_hangul_engine_on_transition, hangul);
+
     hangul->preedit = ustring_new();
     hangul->hanja_list = NULL;
     hangul->hangul_mode = TRUE;
@@ -1224,6 +1239,27 @@ ibus_hangul_engine_has_preedit (IBusHangulEngine *hangul)
     return FALSE;
 }
 
+static bool
+ibus_hangul_engine_on_transition (HangulInputContext     *hic,
+                                  ucschar                 c,
+                                  const ucschar          *preedit,
+                                  void                   *data)
+{
+    if (!auto_reorder) {
+        if (hangul_is_choseong (c)) {
+            if (hangul_ic_has_jungseong (hic) || hangul_ic_has_jongseong (hic))
+                return false;
+        }
+
+        if (hangul_is_jungseong (c)) {
+            if (hangul_ic_has_jongseong (hic))
+                return false;
+        }
+    }
+
+    return true;
+}
+
 static void
 ibus_config_value_changed (IBusConfig   *config,
                            const gchar  *section,
@@ -1243,6 +1279,8 @@ ibus_config_value_changed (IBusConfig   *config,
 	    hanja_key_list_set_from_string(&hanja_keys, str);
         } else if (strcmp(name, "WordCommit") == 0) {
             word_commit = g_variant_get_boolean (value);
+        } else if (strcmp (name, "AutoReorder") == 0) {
+            auto_reorder = g_variant_get_boolean (value);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup_table_orientation") == 0) {
