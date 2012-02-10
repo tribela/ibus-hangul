@@ -16,7 +16,7 @@
 			<language>ko</language>
 			<license>GPL</license>
 			<author>Peng Huang &lt;shawn.p.huang@gmail.com&gt;</author>
-			<icon>${pkgdatadir}/icons/ibus-hangul.png</icon>
+			<icon>ibus-hangul</icon>
 			<layout>us</layout>
 			<longname>Korean</longname>
 			<description>Korean Input Method</description>

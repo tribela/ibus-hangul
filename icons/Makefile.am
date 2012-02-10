@@ -23,10 +23,14 @@ icons_DATA = \
 	ibus-hangul.png \
 	ibus-hangul.svg \
 	$(NULL)
-
 iconsdir = $(pkgdatadir)/icons
 
+hicolor_icon_64_DATA = ibus-hangul.png
+hicolor_icon_64dir = $(datadir)/icons/hicolor/64x64/apps
+
+hicolor_icon_scalable_DATA = ibus-hangul.svg
+hicolor_icon_scalabledir = $(datadir)/icons/hicolor/scalable/apps
+
 EXTRA_DIST = \
-	ibus-hangul.png \
-	ibus-hangul.svg \
+	$(icon_DATA) \
 	$(NULL)

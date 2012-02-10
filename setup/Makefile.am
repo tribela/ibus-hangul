@@ -43,6 +43,12 @@ desktop_DATA = ibus-setup-hangul.desktop
 desktopdir = $(datadir)/applications
 @INTLTOOL_DESKTOP_RULE@
 
+hicolor_icon_64_DATA = ibus-setup-hangul.png
+hicolor_icon_64dir = $(datadir)/icons/hicolor/64x64/apps
+
+hicolor_icon_scalable_DATA = ibus-setup-hangul.svg
+hicolor_icon_scalabledir = $(datadir)/icons/hicolor/scalable/apps
+
 CLEANFILES = \
 	ibus-setup-hangul \
 	config.py \
