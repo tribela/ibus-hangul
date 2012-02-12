@@ -29,7 +29,7 @@ nodist_setup_hangul_PYTHON = config.py
 
 setup_hanguldir = $(pkgdatadir)/setup
 
-bin_SCRIPTS = ibus-setup-hangul
+libexec_SCRIPTS = ibus-setup-hangul
 
 setuplibdir = $(pkglibdir)/setup
 setuplib_PROGRAMS = hangul_keyboard_list
@@ -75,3 +75,19 @@ config.py: config.py.in Makefile
 
 ibus-setup-hangul: ibus-setup-hangul.in config.py Makefile
 	sed -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' $< > $@
+
+install-exec-hook:
+	$(mkdir_p) $(DESTDIR)$(bindir)
+	cd $(DESTDIR)$(bindir) && \
+	rm -f ibus-setup-hangul && \
+	a="$(bindir)"; b="$(libexecdir)"; updir=""; downdir=""; \
+	while test "$$a" != "$$b"; do \
+		bbase=`basename $$b`; \
+		updir="../$$updir"; \
+		downdir="$$bbase/$$downdir"; \
+		a=`dirname $$a`; b=`dirname $$b`; \
+	done; \
+	$(LN_S) $$updir$${downdir}ibus-setup-hangul ibus-setup-hangul
+
+uninstall-hook:
+	cd "$(DESTDIR)$(bindir)" && rm -f ibus-setup-hangul
