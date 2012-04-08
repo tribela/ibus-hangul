@@ -60,6 +60,8 @@ EXTRA_DIST = \
 	config.py.in \
 	ibus-setup-hangul.in \
 	ibus-setup-hangul.desktop.in \
+	$(hicolor_icon_64_DATA) \
+	$(hicolor_icon_scalable_DATA) \
 	$(NULL)
 
 test:

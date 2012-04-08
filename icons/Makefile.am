@@ -32,5 +32,5 @@ hicolor_icon_scalable_DATA = ibus-hangul.svg
 hicolor_icon_scalabledir = $(datadir)/icons/hicolor/scalable/apps
 
 EXTRA_DIST = \
-	$(icon_DATA) \
+	$(icons_DATA) \
 	$(NULL)
