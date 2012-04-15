@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ibus-hangul\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-10 23:24+0900\n"
+"POT-Creation-Date: 2012-04-15 23:46+0900\n"
 "PO-Revision-Date: 2009-02-18 23:32+0900\n"
 "Last-Translator: Choe Hwanjin <choe.hwanjin@gmail.com>\n"
 "Language-Team: korean <ko@li.org>\n"
@@ -30,6 +30,14 @@ msgstr ""
 #: ../setup/main.py:153
 msgid "Select Hanja key"
 msgstr "한자키를 선택하시오"
+
+#: ../setup/main.py:200
+msgid ""
+"IBus daemon is not running.\n"
+"Hangul engine settings cannot be saved."
+msgstr ""
+"IBus 데몬이 실행중이지 않습니다.\n"
+"한글 엔진 설정을 저장할 수 없습니다."
 
 #: ../setup/ibus-setup-hangul.desktop.in.h:1
 msgid "IBus Hangul Preferences"
@@ -102,6 +110,9 @@ msgstr "한글 입력기"
 #: ../src/main.c:80 ../src/main.c:81
 msgid "Korean Input Method"
 msgstr "한글 입력기"
+
+#~ msgid "IBus daemon is not running"
+#~ msgstr "IBus 데몬이 실행중이지 않습니다"
 
 #~ msgid "Dubeolsik"
 #~ msgstr "두벌식"

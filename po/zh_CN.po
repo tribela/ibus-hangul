@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-10 23:24+0900\n"
+"POT-Creation-Date: 2012-04-15 23:46+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,6 +26,12 @@ msgstr ""
 
 #: ../setup/main.py:153
 msgid "Select Hanja key"
+msgstr ""
+
+#: ../setup/main.py:200
+msgid ""
+"IBus daemon is not running.\n"
+"Hangul engine settings cannot be saved."
 msgstr ""
 
 #: ../setup/ibus-setup-hangul.desktop.in.h:1

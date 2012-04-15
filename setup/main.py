@@ -197,10 +197,11 @@ if __name__ == "__main__":
     try:
         bus = ibus.Bus()
     except:
-        message = _("IBus daemon is not started")
+        message = _("IBus daemon is not running.\nHangul engine settings cannot be saved.")
         dialog = gtk.MessageDialog(type = gtk.MESSAGE_ERROR,
                                    buttons = gtk.BUTTONS_CLOSE,
                                    message_format = message)
         dialog.run()
         sys.exit(1)
+
     Setup(bus).run()
