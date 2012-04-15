@@ -1,3 +1,9 @@
+1.4.1
+ * Handle exceptions properly in ibus-setup-hangul
+   https://github.com/choehwanjin/ibus-hangul/pull/5
+ * Update icon files
+ * Support ibus icon symbol feature
+
 1.4.0
  * Require ibus 1.4
  * Add desktop menu for ibus-setup-hangul
