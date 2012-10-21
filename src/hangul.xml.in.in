@@ -18,7 +18,7 @@
 			<author>Peng Huang &lt;shawn.p.huang@gmail.com&gt;</author>
 			<icon>ibus-hangul</icon>
 			<layout>us</layout>
-			<longname>Korean</longname>
+			<longname>Hangul</longname>
 			<description>Korean Input Method</description>
 			<rank>99</rank>
 			<symbol>&#xD55C;</symbol>
