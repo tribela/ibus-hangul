@@ -130,6 +130,9 @@ class Setup ():
         word_commit = self.__word_commit.get_active()
         self.__write("WordCommit", GLib.Variant.new_boolean(word_commit))
 
+        auto_reorder = self.__auto_reorder.get_active()
+        self.__write("AutoReorder", GLib.Variant.new_boolean(auto_reorder))
+
         model = self.__hanja_key_list.get_model()
         str = ""
         iter = model.get_iter_first()
