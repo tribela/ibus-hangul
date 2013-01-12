@@ -63,8 +63,8 @@ PKG_CHECK_MODULES(HANGUL, [
 ])
 
 # check env
-AC_PATH_PROG(ENV, env)
-AC_SUBST(ENV)
+AC_PATH_PROG(ENV_PROG, env)
+AC_SUBST(ENV_PROG)
 
 #check python
 AM_PATH_PYTHON([2.5])
