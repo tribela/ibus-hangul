@@ -65,11 +65,11 @@ msgstr "고급"
 
 #: ../setup/setup.ui.h:5
 msgid "Automatic _reordering"
-msgstr "자동 순서 교정(_r)"
+msgstr "자동 순서 교정(_R)"
 
 #: ../setup/setup.ui.h:6
 msgid "Commit in _word unit"
-msgstr "단어 단위로 입력(_w)"
+msgstr "단어 단위로 입력(_W)"
 
 #: ../setup/setup.ui.h:7
 msgid "Hangul"
