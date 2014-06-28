@@ -255,6 +255,7 @@ ibus_hangul_init (IBusBus *bus)
         g_variant_unref(value);
     } else {
 	hotkey_list_append(&hangul_keys, IBUS_Hangul, 0);
+	hotkey_list_append(&hangul_keys, IBUS_space, IBUS_SHIFT_MASK);
     }
 
     hotkey_list_init(&hanja_keys);
