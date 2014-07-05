@@ -1348,6 +1348,9 @@ ibus_config_value_changed (IBusConfig   *config,
             word_commit = g_variant_get_boolean (value);
         } else if (strcmp (name, "AutoReorder") == 0) {
             auto_reorder = g_variant_get_boolean (value);
+        } else if (strcmp (name, "HangulKeys") == 0) {
+            const gchar* str = g_variant_get_string(value, NULL);
+	    hotkey_list_set_from_string(&hangul_keys, str);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup_table_orientation") == 0) {
