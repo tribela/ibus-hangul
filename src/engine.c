@@ -977,6 +977,14 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
             ibus_hangul_engine_flush (hangul);
 
         hangul->hangul_mode = !hangul->hangul_mode;
+        if (hangul->hangul_mode) {
+            ibus_property_set_state (hangul->prop_hangul_mode,
+                    PROP_STATE_CHECKED);
+        } else {
+            ibus_property_set_state (hangul->prop_hangul_mode,
+                    PROP_STATE_UNCHECKED);
+        }
+        ibus_engine_update_property (engine, hangul->prop_hangul_mode);
         return TRUE;
     }
 
