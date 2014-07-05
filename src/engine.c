@@ -363,7 +363,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     hangul->prop_list = ibus_prop_list_new ();
     g_object_ref_sink (hangul->prop_list);
 
-    label = ibus_text_new_from_string (_("Hangul lock"));
+    label = ibus_text_new_from_string (_("Hangul mode"));
     tooltip = ibus_text_new_from_string (_("Enable/Disable Hangul mode"));
     prop = ibus_property_new ("hangul_mode",
                               PROP_TYPE_TOGGLE,
