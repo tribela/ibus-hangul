@@ -363,7 +363,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     hangul->prop_list = ibus_prop_list_new ();
     g_object_ref_sink (hangul->prop_list);
 
-    label = ibus_text_new_from_string (_("Hangul lock"));
+    label = ibus_text_new_from_string (_("Hangul mode"));
     tooltip = ibus_text_new_from_string (_("Enable/Disable Hangul mode"));
     prop = ibus_property_new ("hangul_mode",
                               PROP_TYPE_TOGGLE,
@@ -977,6 +977,14 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
             ibus_hangul_engine_flush (hangul);
 
         hangul->hangul_mode = !hangul->hangul_mode;
+        if (hangul->hangul_mode) {
+            ibus_property_set_state (hangul->prop_hangul_mode,
+                    PROP_STATE_CHECKED);
+        } else {
+            ibus_property_set_state (hangul->prop_hangul_mode,
+                    PROP_STATE_UNCHECKED);
+        }
+        ibus_engine_update_property (engine, hangul->prop_hangul_mode);
         return TRUE;
     }
 
@@ -1348,6 +1356,9 @@ ibus_config_value_changed (IBusConfig   *config,
             word_commit = g_variant_get_boolean (value);
         } else if (strcmp (name, "AutoReorder") == 0) {
             auto_reorder = g_variant_get_boolean (value);
+        } else if (strcmp (name, "HangulKeys") == 0) {
+            const gchar* str = g_variant_get_string(value, NULL);
+	    hotkey_list_set_from_string(&hangul_keys, str);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup_table_orientation") == 0) {

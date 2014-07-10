@@ -78,6 +78,29 @@ class Setup ():
         auto_reorder = self.__read("AutoReorder", default).get_boolean()
         self.__auto_reorder.set_active(auto_reorder)
 
+        button = self.__builder.get_object("HangulKeyListAddButton")
+        button.connect("clicked", self.on_hangul_key_add, None)
+
+        button = self.__builder.get_object("HangulKeyListRemoveButton")
+        button.connect("clicked", self.on_hangul_key_remove, None)
+
+        model = Gtk.ListStore(str)
+
+        default = GLib.Variant.new_string("Hangul,Shift+space")
+        keylist_str = self.__read("HangulKeys", default).get_string()
+        self.__hangul_key_list_str = keylist_str.split(',')
+        for i in self.__hangul_key_list_str:
+            model.append([i])
+
+        self.__hangul_key_list = self.__builder.get_object("HangulKeyList")
+        self.__hangul_key_list.set_model(model)
+        column = Gtk.TreeViewColumn()
+        column.set_title("key")
+        renderer = Gtk.CellRendererText()
+        column.pack_start(renderer, True)
+        column.add_attribute(renderer, "text", 0)
+        self.__hangul_key_list.append_column(column)
+
         # hanja tab
         button = self.__builder.get_object("HanjaKeyListAddButton")
         button.connect("clicked", self.on_hanja_key_add, None)
@@ -133,6 +156,18 @@ class Setup ():
         auto_reorder = self.__auto_reorder.get_active()
         self.__write("AutoReorder", GLib.Variant.new_boolean(auto_reorder))
 
+        model = self.__hangul_key_list.get_model()
+        str = ""
+        iter = model.get_iter_first()
+        while iter:
+            if len(str) > 0:
+                str += ","
+                str += model.get_value(iter, 0)
+            else:
+                str += model.get_value(iter, 0)
+            iter = model.iter_next(iter)
+        self.__write("HangulKeys", GLib.Variant.new_string(str))
+
         model = self.__hanja_key_list.get_model()
         str = ""
         iter = model.get_iter_first()
@@ -154,6 +189,30 @@ class Setup ():
 
     def on_ok(self):
         self.apply()
+
+    def on_hangul_key_add(self, widget, data = None):
+        dialog = KeyCaptureDialog(_("Select Hangul toggle key"), self.__window)
+        res = dialog.run()
+        if res == Gtk.ResponseType.OK:
+            key_str = dialog.get_key_string()
+            if len(key_str) > 0:
+                model = self.__hangul_key_list.get_model()
+                iter = model.get_iter_first()
+                while iter:
+                    str = model.get_value(iter, 0)
+                    if str == key_str:
+                        model.remove(iter)
+                        break
+                    iter = model.iter_next(iter)
+
+                model.append([key_str])
+        dialog.destroy()
+
+    def on_hangul_key_remove(self, widget, data = None):
+        selection = self.__hangul_key_list.get_selection()
+        (model, iter) = selection.get_selected()
+        if model and iter:
+            model.remove(iter)
 
     def on_hanja_key_add(self, widget, data = None):
         dialog = KeyCaptureDialog(_("Select Hanja key"), self.__window)
@@ -187,6 +246,8 @@ class Setup ():
                     if i[1] == value:
                         self.__hangul_keyboard.set_active(i[2])
                         break
+            elif name == "HangulKeys":
+                self.__hangul_key_list_str = value.split(',')
             elif name == "HanjaKeys":
                 self.__hanja_key_list_str = value.split(',')
 
