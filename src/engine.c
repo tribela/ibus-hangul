@@ -43,7 +43,7 @@ struct _IBusHangulEngine {
     /* members */
     HangulInputContext *context;
     UString* preedit;
-    gboolean hangul_mode;
+    int input_mode;
     gboolean hanja_mode;
     HanjaList* hanja_list;
     int last_lookup_method;
@@ -67,6 +67,11 @@ struct KeyEvent {
 struct _HotkeyList {
     guint   all_modifiers;
     GArray *keys;
+};
+
+enum {
+    INPUT_MODE_DIRECT,
+    INPUT_MODE_HANGUL,
 };
 
 enum {
@@ -139,6 +144,11 @@ static void ibus_hangul_engine_update_lookup_table
                                             (IBusHangulEngine       *hangul);
 static gboolean ibus_hangul_engine_has_preedit
                                             (IBusHangulEngine       *hangul);
+static void ibus_hangul_engine_toggle_input_mode
+                                            (IBusHangulEngine       *hangul);
+static void ibus_hangul_engine_set_input_mode
+                                            (IBusHangulEngine       *hangul,
+                                             int                     mode);
 static bool ibus_hangul_engine_on_transition
                                             (HangulInputContext     *hic,
                                              ucschar                 c,
@@ -357,7 +367,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
 
     hangul->preedit = ustring_new();
     hangul->hanja_list = NULL;
-    hangul->hangul_mode = TRUE;
+    hangul->input_mode = INPUT_MODE_DIRECT;
     hangul->hanja_mode = FALSE;
     hangul->last_lookup_method = LOOKUP_METHOD_PREFIX;
 
@@ -366,7 +376,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
 
     label = ibus_text_new_from_string (_("Hangul mode"));
     tooltip = ibus_text_new_from_string (_("Enable/Disable Hangul mode"));
-    symbol = ibus_text_new_from_string ("한");
+    symbol = ibus_text_new_from_string ("A");
     prop = ibus_property_new ("InputMode",
                               PROP_TYPE_TOGGLE,
                               label,
@@ -976,28 +986,11 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         return FALSE;
 
     if (hotkey_list_match(&hangul_keys, keyval, modifiers)) {
-        if (hangul->hangul_mode)
-            ibus_hangul_engine_flush (hangul);
-
-        hangul->hangul_mode = !hangul->hangul_mode;
-        if (hangul->hangul_mode) {
-            IBusText* symbol;
-            symbol = ibus_text_new_from_string ("한");
-            ibus_property_set_symbol(hangul->prop_hangul_mode, symbol);
-            ibus_property_set_state (hangul->prop_hangul_mode,
-                    PROP_STATE_CHECKED);
-        } else {
-            IBusText* symbol;
-            symbol = ibus_text_new_from_string ("A");
-            ibus_property_set_symbol(hangul->prop_hangul_mode, symbol);
-            ibus_property_set_state (hangul->prop_hangul_mode,
-                    PROP_STATE_UNCHECKED);
-        }
-        ibus_engine_update_property (engine, hangul->prop_hangul_mode);
+        ibus_hangul_engine_toggle_input_mode (hangul);
         return TRUE;
     }
 
-    if (!hangul->hangul_mode)
+    if (hangul->input_mode == INPUT_MODE_DIRECT)
         return FALSE;
 
     if (hotkey_list_has_modifier(&hanja_keys, keyval))
@@ -1159,7 +1152,7 @@ ibus_hangul_engine_focus_in (IBusEngine *engine)
 {
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
-    if (hangul->hangul_mode) {
+    if (hangul->input_mode == INPUT_MODE_HANGUL) {
         ibus_property_set_state (hangul->prop_hangul_mode, PROP_STATE_CHECKED);
     } else {
         ibus_property_set_state (hangul->prop_hangul_mode, PROP_STATE_UNCHECKED);
@@ -1275,20 +1268,10 @@ ibus_hangul_engine_property_activate (IBusEngine    *engine,
         argv[0] = "ibus-setup-hangul";
         argv[1] = NULL;
         g_spawn_async (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error);
-    } else if (strcmp(prop_name, "hangul_mode") == 0) {
+    } else if (strcmp(prop_name, "InputMode") == 0) {
         IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
-        hangul->hangul_mode = !hangul->hangul_mode;
-        if (hangul->hangul_mode) {
-            ibus_property_set_state (hangul->prop_hangul_mode,
-                    PROP_STATE_CHECKED);
-        } else {
-            ibus_property_set_state (hangul->prop_hangul_mode,
-                    PROP_STATE_UNCHECKED);
-        }
-
-        ibus_engine_update_property (engine, hangul->prop_hangul_mode);
-        ibus_hangul_engine_flush (hangul);
+        ibus_hangul_engine_toggle_input_mode (hangul);
     } else if (strcmp(prop_name, "hanja_mode") == 0) {
         IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
@@ -1321,6 +1304,42 @@ ibus_hangul_engine_has_preedit (IBusHangulEngine *hangul)
         return TRUE;
 
     return FALSE;
+}
+
+static void
+ibus_hangul_engine_toggle_input_mode (IBusHangulEngine *hangul)
+{
+    int input_mode;
+
+    if (hangul->input_mode == INPUT_MODE_HANGUL)
+        input_mode = INPUT_MODE_DIRECT;
+    else
+        input_mode = INPUT_MODE_HANGUL;
+
+    ibus_hangul_engine_set_input_mode (hangul, input_mode);
+}
+
+static void
+ibus_hangul_engine_set_input_mode (IBusHangulEngine *hangul, int mode)
+{
+    IBusText* symbol;
+    IBusProperty* prop;
+
+    ibus_hangul_engine_flush (hangul);
+
+    prop = hangul->prop_hangul_mode;
+
+    hangul->input_mode = mode;
+    if (hangul->input_mode == INPUT_MODE_HANGUL) {
+        symbol = ibus_text_new_from_string ("한");
+        ibus_property_set_symbol(prop, symbol);
+        ibus_property_set_state (prop, PROP_STATE_CHECKED);
+    } else {
+        symbol = ibus_text_new_from_string ("A");
+        ibus_property_set_symbol(prop, symbol);
+        ibus_property_set_state (prop, PROP_STATE_UNCHECKED);
+    }
+    ibus_engine_update_property (IBUS_ENGINE (hangul), prop);
 }
 
 static bool
@@ -1368,6 +1387,13 @@ ibus_config_value_changed (IBusConfig   *config,
         } else if (strcmp (name, "HangulKeys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&hangul_keys, str);
+        } else if (strcmp (name, "initial_input_mode") == 0) {
+            const gchar* str = g_variant_get_string(value, NULL);
+            if (strcmp (str, "hangul") == 0) {
+                ibus_hangul_engine_set_input_mode (hangul, INPUT_MODE_HANGUL);
+            } else {
+                ibus_hangul_engine_set_input_mode (hangul, INPUT_MODE_DIRECT);
+            }
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup_table_orientation") == 0) {
