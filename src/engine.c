@@ -349,6 +349,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     IBusProperty* prop;
     IBusText* label;
     IBusText* tooltip;
+    IBusText* symbol;
 
     hangul->context = hangul_ic_new (hangul_keyboard->str);
     hangul_ic_connect_callback (hangul->context, "transition",
@@ -365,12 +366,14 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
 
     label = ibus_text_new_from_string (_("Hangul mode"));
     tooltip = ibus_text_new_from_string (_("Enable/Disable Hangul mode"));
-    prop = ibus_property_new ("hangul_mode",
+    symbol = ibus_text_new_from_string ("한");
+    prop = ibus_property_new ("InputMode",
                               PROP_TYPE_TOGGLE,
                               label,
                               NULL,
                               tooltip,
                               TRUE, TRUE, PROP_STATE_UNCHECKED, NULL);
+    ibus_property_set_symbol(prop, symbol);
     g_object_ref_sink (prop);
     ibus_prop_list_append (hangul->prop_list, prop);
     hangul->prop_hangul_mode = prop;
@@ -978,9 +981,15 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 
         hangul->hangul_mode = !hangul->hangul_mode;
         if (hangul->hangul_mode) {
+            IBusText* symbol;
+            symbol = ibus_text_new_from_string ("한");
+            ibus_property_set_symbol(hangul->prop_hangul_mode, symbol);
             ibus_property_set_state (hangul->prop_hangul_mode,
                     PROP_STATE_CHECKED);
         } else {
+            IBusText* symbol;
+            symbol = ibus_text_new_from_string ("A");
+            ibus_property_set_symbol(hangul->prop_hangul_mode, symbol);
             ibus_property_set_state (hangul->prop_hangul_mode,
                     PROP_STATE_UNCHECKED);
         }
