@@ -67,8 +67,12 @@ class Setup ():
                 self.__hangul_keyboard.set_active(i[2])
                 break
 
-        self.__word_commit = self.__builder.get_object("WordCommit")
+        self.__start_in_hangul_mode = self.__builder.get_object("StartInHangulMode")
+        default = GLib.Variant.new_string("latin")
+        initial_input_mode = self.__read("initial_input_mode", default).get_string()
+        self.__start_in_hangul_mode.set_active(initial_input_mode == "hangul")
 
+        self.__word_commit = self.__builder.get_object("WordCommit")
         default = GLib.Variant.new_boolean(False)
         word_commit = self.__read("WordCommit", default).get_boolean()
         self.__word_commit.set_active(word_commit)
@@ -149,6 +153,12 @@ class Setup ():
         model = self.__hangul_keyboard.get_model()
         i = self.__hangul_keyboard.get_active()
         self.__write("HangulKeyboard", GLib.Variant.new_string(model[i][1]))
+
+        start_in_hangul_mode = self.__start_in_hangul_mode.get_active()
+        if start_in_hangul_mode:
+            self.__write("initial_input_mode", GLib.Variant.new_string("hangul"))
+        else:
+            self.__write("initial_input_mode", GLib.Variant.new_string("latin"))
 
         word_commit = self.__word_commit.get_active()
         self.__write("WordCommit", GLib.Variant.new_boolean(word_commit))
