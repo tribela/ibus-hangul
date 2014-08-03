@@ -200,6 +200,7 @@ static IBusConfig *config = NULL;
 static GString    *hangul_keyboard = NULL;
 static HotkeyList hangul_keys;
 static HotkeyList hanja_keys;
+static HotkeyList off_keys;
 static int lookup_table_orientation = 0;
 static IBusKeymap *keymap = NULL;
 static gboolean word_commit = FALSE;
@@ -290,6 +291,16 @@ ibus_hangul_init (IBusBus *bus)
 	hotkey_list_append(&hanja_keys, IBUS_F9, 0);
     }
 
+    hotkey_list_init (&off_keys);
+    value = ibus_config_get_value (config, "engine/Hangul", "off_keys");
+    if (value != NULL) {
+        const gchar* str = g_variant_get_string (value, NULL);
+        hotkey_list_set_from_string (&off_keys, str);
+        g_variant_unref (value);
+    } else {
+        hotkey_list_append (&off_keys, IBUS_KEY_Escape, 0);
+    }
+
     value = ibus_config_get_value (config, "engine/Hangul",
                                          "WordCommit");
     if (value != NULL) {
@@ -325,8 +336,9 @@ ibus_hangul_exit (void)
 	keymap = NULL;
     }
 
-    hotkey_list_fini(&hangul_keys);
-    hotkey_list_fini(&hanja_keys);
+    hotkey_list_fini (&hangul_keys);
+    hotkey_list_fini (&hanja_keys);
+    hotkey_list_fini (&off_keys);
 
     hanja_table_delete (hanja_table);
     hanja_table = NULL;
@@ -1025,6 +1037,14 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (hangul->input_mode == INPUT_MODE_DIRECT)
         return FALSE;
 
+    /* This feature is for vi* users.
+     * On Esc, the input mode is changed to latin */
+    if (hotkey_list_match (&off_keys, keyval, modifiers)) {
+        ibus_hangul_engine_set_input_mode (hangul, INPUT_MODE_DIRECT);
+        /* If we return TRUE, then vi will not receive "ESC" key event. */
+        return FALSE;
+    }
+
     if (hotkey_list_has_modifier(&hanja_keys, keyval))
 	return FALSE; 
 
@@ -1526,6 +1546,7 @@ static void
 hotkey_list_fini(HotkeyList* list)
 {
     g_array_free(list->keys, TRUE);
+    list->keys = NULL;
 }
 
 static void
