@@ -258,8 +258,8 @@ ibus_hangul_init (IBusBus *bus)
         g_object_ref_sink (config);
 
     hangul_keyboard = g_string_new_len ("2", 8);
-    value = ibus_config_get_value (config, "engine/Hangul",
-                                         "HangulKeyboard");
+    value = ibus_config_get_value (config, "engine/hangul",
+                                         "hangul-keyboard");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
         g_string_assign (hangul_keyboard, str);
@@ -268,8 +268,8 @@ ibus_hangul_init (IBusBus *bus)
 
     hotkey_list_init(&hangul_keys);
 
-    value = ibus_config_get_value (config, "engine/Hangul",
-                                         "HangulKeys");
+    value = ibus_config_get_value (config, "engine/hangul",
+                                         "hangul-keys");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
         hotkey_list_set_from_string(&hangul_keys, str);
@@ -281,8 +281,8 @@ ibus_hangul_init (IBusBus *bus)
 
     hotkey_list_init(&hanja_keys);
 
-    value = ibus_config_get_value (config, "engine/Hangul",
-                                         "HanjaKeys");
+    value = ibus_config_get_value (config, "engine/hangul",
+                                         "hanja-keys");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
         hotkey_list_set_from_string(&hanja_keys, str);
@@ -293,7 +293,7 @@ ibus_hangul_init (IBusBus *bus)
     }
 
     hotkey_list_init (&on_keys);
-    value = ibus_config_get_value (config, "engine/Hangul", "on-keys");
+    value = ibus_config_get_value (config, "engine/hangul", "on-keys");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
         hotkey_list_set_from_string (&on_keys, str);
@@ -302,7 +302,7 @@ ibus_hangul_init (IBusBus *bus)
     }
 
     hotkey_list_init (&off_keys);
-    value = ibus_config_get_value (config, "engine/Hangul", "off_keys");
+    value = ibus_config_get_value (config, "engine/hangul", "off-keys");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
         hotkey_list_set_from_string (&off_keys, str);
@@ -311,20 +311,20 @@ ibus_hangul_init (IBusBus *bus)
         hotkey_list_append (&off_keys, IBUS_KEY_Escape, 0);
     }
 
-    value = ibus_config_get_value (config, "engine/Hangul",
-                                         "WordCommit");
+    value = ibus_config_get_value (config, "engine/hangul",
+                                         "word-commit");
     if (value != NULL) {
         word_commit = g_variant_get_boolean (value);
         g_variant_unref(value);
     }
 
-    value = ibus_config_get_value (config, "engine/Hangul", "AutoReorder");
+    value = ibus_config_get_value (config, "engine/hangul", "auto-reorder");
     if (value != NULL) {
         auto_reorder = g_variant_get_boolean (value);
         g_variant_unref (value);
     }
 
-    value = ibus_config_get_value (config, "engine/Hangul", "initial_input_mode");
+    value = ibus_config_get_value (config, "engine/hangul", "initial-input-mode");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
         if (strcmp(str, "latin") == 0) {
@@ -1460,24 +1460,24 @@ ibus_config_value_changed (IBusConfig   *config,
 {
     IBusHangulEngine *hangul = (IBusHangulEngine *) user_data;
 
-    if (strcmp(section, "engine/Hangul") == 0) {
-        if (strcmp(name, "HangulKeyboard") == 0) {
+    if (strcmp(section, "engine/hangul") == 0) {
+        if (strcmp(name, "hangul-keyboard") == 0) {
             const gchar *str = g_variant_get_string(value, NULL);
             g_string_assign (hangul_keyboard, str);
             hangul_ic_select_keyboard (hangul->context, hangul_keyboard->str);
-        } else if (strcmp(name, "HanjaKeys") == 0) {
+        } else if (strcmp(name, "hanja-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&hanja_keys, str);
-        } else if (strcmp(name, "WordCommit") == 0) {
+        } else if (strcmp(name, "word-commit") == 0) {
             word_commit = g_variant_get_boolean (value);
-        } else if (strcmp (name, "AutoReorder") == 0) {
+        } else if (strcmp (name, "auto-reorder") == 0) {
             auto_reorder = g_variant_get_boolean (value);
-        } else if (strcmp (name, "HangulKeys") == 0) {
+        } else if (strcmp (name, "hangul-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&hangul_keys, str);
         }
     } else if (strcmp(section, "panel") == 0) {
-        if (strcmp(name, "lookup_table_orientation") == 0) {
+        if (strcmp(name, "lookup-table-orientation") == 0) {
             lookup_table_orientation = g_variant_get_int32(value);
         }
     }

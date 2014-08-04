@@ -61,7 +61,7 @@ class Setup ():
         self.__hangul_keyboard.add_attribute(renderer, "text", 0)
 
         default = GLib.Variant.new_string("2")
-        current = self.__read("HangulKeyboard", default).get_string()
+        current = self.__read("hangul-keyboard", default).get_string()
         for i in model:
             if i[1] == current:
                 self.__hangul_keyboard.set_active(i[2])
@@ -69,17 +69,17 @@ class Setup ():
 
         self.__start_in_hangul_mode = self.__builder.get_object("StartInHangulMode")
         default = GLib.Variant.new_string("latin")
-        initial_input_mode = self.__read("initial_input_mode", default).get_string()
+        initial_input_mode = self.__read("initial-input-mode", default).get_string()
         self.__start_in_hangul_mode.set_active(initial_input_mode == "hangul")
 
         self.__word_commit = self.__builder.get_object("WordCommit")
         default = GLib.Variant.new_boolean(False)
-        word_commit = self.__read("WordCommit", default).get_boolean()
+        word_commit = self.__read("word-commit", default).get_boolean()
         self.__word_commit.set_active(word_commit)
 
         self.__auto_reorder = self.__builder.get_object("AutoReorder")
         default = GLib.Variant.new_boolean(True)
-        auto_reorder = self.__read("AutoReorder", default).get_boolean()
+        auto_reorder = self.__read("auto-reorder", default).get_boolean()
         self.__auto_reorder.set_active(auto_reorder)
 
         button = self.__builder.get_object("HangulKeyListAddButton")
@@ -91,7 +91,7 @@ class Setup ():
         model = Gtk.ListStore(str)
 
         default = GLib.Variant.new_string("Hangul,Shift+space")
-        keylist_str = self.__read("HangulKeys", default).get_string()
+        keylist_str = self.__read("hangul-keys", default).get_string()
         self.__hangul_key_list_str = keylist_str.split(',')
         for i in self.__hangul_key_list_str:
             model.append([i])
@@ -115,7 +115,7 @@ class Setup ():
         model = Gtk.ListStore(str)
 
         default = GLib.Variant.new_string("Hangul_Hanja,F9")
-        keylist_str = self.__read("HanjaKeys", default).get_string()
+        keylist_str = self.__read("hanja-keys", default).get_string()
         self.__hanja_key_list_str = keylist_str.split(',')
         for i in self.__hanja_key_list_str:
             model.append([i])
@@ -152,19 +152,19 @@ class Setup ():
     def apply(self):
         model = self.__hangul_keyboard.get_model()
         i = self.__hangul_keyboard.get_active()
-        self.__write("HangulKeyboard", GLib.Variant.new_string(model[i][1]))
+        self.__write("hangul-keyboard", GLib.Variant.new_string(model[i][1]))
 
         start_in_hangul_mode = self.__start_in_hangul_mode.get_active()
         if start_in_hangul_mode:
-            self.__write("initial_input_mode", GLib.Variant.new_string("hangul"))
+            self.__write("initial-input-mode", GLib.Variant.new_string("hangul"))
         else:
-            self.__write("initial_input_mode", GLib.Variant.new_string("latin"))
+            self.__write("initial-input-mode", GLib.Variant.new_string("latin"))
 
         word_commit = self.__word_commit.get_active()
-        self.__write("WordCommit", GLib.Variant.new_boolean(word_commit))
+        self.__write("word-commit", GLib.Variant.new_boolean(word_commit))
 
         auto_reorder = self.__auto_reorder.get_active()
-        self.__write("AutoReorder", GLib.Variant.new_boolean(auto_reorder))
+        self.__write("auto-reorder", GLib.Variant.new_boolean(auto_reorder))
 
         model = self.__hangul_key_list.get_model()
         str = ""
@@ -176,7 +176,7 @@ class Setup ():
             else:
                 str += model.get_value(iter, 0)
             iter = model.iter_next(iter)
-        self.__write("HangulKeys", GLib.Variant.new_string(str))
+        self.__write("hangul-keys", GLib.Variant.new_string(str))
 
         model = self.__hanja_key_list.get_model()
         str = ""
@@ -188,7 +188,7 @@ class Setup ():
             else:
                 str += model.get_value(iter, 0)
             iter = model.iter_next(iter)
-        self.__write("HanjaKeys", GLib.Variant.new_string(str))
+        self.__write("hanja-keys", GLib.Variant.new_string(str))
 
     def on_response(self, widget, id, data = None):
         if id == Gtk.ResponseType.APPLY:
@@ -250,19 +250,19 @@ class Setup ():
 
     def on_value_changed(self, config, section, name, value, data):
         if section == "engine/Hangul":
-            if name == "HangulKeyboard":
+            if name == "hangul-keyboard":
                 model = self.__hangul_keyboard.get_model()
                 for i in model:
                     if i[1] == value:
                         self.__hangul_keyboard.set_active(i[2])
                         break
-            elif name == "HangulKeys":
+            elif name == "hangul-keys":
                 self.__hangul_key_list_str = value.split(',')
-            elif name == "HanjaKeys":
+            elif name == "hanja-keys":
                 self.__hanja_key_list_str = value.split(',')
 
     def __read(self, name, v):
-        value = self.__config.get_value("engine/Hangul", name)
+        value = self.__config.get_value("engine/hangul", name)
         if value is None:
             return v
         return value
