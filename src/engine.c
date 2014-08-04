@@ -200,6 +200,7 @@ static IBusConfig *config = NULL;
 static GString    *hangul_keyboard = NULL;
 static HotkeyList hangul_keys;
 static HotkeyList hanja_keys;
+static HotkeyList on_keys;
 static HotkeyList off_keys;
 static int lookup_table_orientation = 0;
 static IBusKeymap *keymap = NULL;
@@ -291,6 +292,15 @@ ibus_hangul_init (IBusBus *bus)
 	hotkey_list_append(&hanja_keys, IBUS_F9, 0);
     }
 
+    hotkey_list_init (&on_keys);
+    value = ibus_config_get_value (config, "engine/Hangul", "on-keys");
+    if (value != NULL) {
+        const gchar* str = g_variant_get_string (value, NULL);
+        hotkey_list_set_from_string (&on_keys, str);
+        g_variant_unref (value);
+    } else {
+    }
+
     hotkey_list_init (&off_keys);
     value = ibus_config_get_value (config, "engine/Hangul", "off_keys");
     if (value != NULL) {
@@ -338,6 +348,7 @@ ibus_hangul_exit (void)
 
     hotkey_list_fini (&hangul_keys);
     hotkey_list_fini (&hanja_keys);
+    hotkey_list_fini (&on_keys);
     hotkey_list_fini (&off_keys);
 
     hanja_table_delete (hanja_table);
@@ -1032,6 +1043,11 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (hotkey_list_match(&hangul_keys, keyval, modifiers)) {
         ibus_hangul_engine_toggle_input_mode (hangul);
         return TRUE;
+    }
+
+    if (hotkey_list_match (&on_keys, keyval, modifiers)) {
+        ibus_hangul_engine_set_input_mode (hangul, INPUT_MODE_HANGUL);
+        return FALSE;
     }
 
     if (hangul->input_mode == INPUT_MODE_DIRECT)
