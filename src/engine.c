@@ -335,6 +335,11 @@ ibus_hangul_init (IBusBus *bus)
         g_variant_unref (value);
     }
 
+    value = ibus_config_get_value (config, "panel", "lookup-table-orientation");
+    if (value != NULL) {
+        lookup_table_orientation = g_variant_get_int32(value);
+    }
+
     keymap = ibus_keymap_get("us");
 }
 
