@@ -1480,6 +1480,12 @@ ibus_config_value_changed (IBusConfig   *config,
         } else if (strcmp (name, "switch-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&switch_keys, str);
+        } else if (strcmp (name, "on-keys") == 0) {
+            const gchar* str = g_variant_get_string(value, NULL);
+	    hotkey_list_set_from_string(&on_keys, str);
+        } else if (strcmp (name, "off-keys") == 0) {
+            const gchar* str = g_variant_get_string(value, NULL);
+	    hotkey_list_set_from_string(&off_keys, str);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup-table-orientation") == 0) {
