@@ -198,8 +198,8 @@ static HanjaTable *hanja_table = NULL;
 static HanjaTable *symbol_table = NULL;
 static IBusConfig *config = NULL;
 static GString    *hangul_keyboard = NULL;
-static HotkeyList hangul_keys;
 static HotkeyList hanja_keys;
+static HotkeyList switch_keys;
 static HotkeyList on_keys;
 static HotkeyList off_keys;
 static int lookup_table_orientation = 0;
@@ -266,17 +266,17 @@ ibus_hangul_init (IBusBus *bus)
         g_variant_unref(value);
     }
 
-    hotkey_list_init(&hangul_keys);
+    hotkey_list_init(&switch_keys);
 
     value = ibus_config_get_value (config, "engine/hangul",
-                                         "hangul-keys");
+                                         "switch-keys");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
-        hotkey_list_set_from_string(&hangul_keys, str);
+        hotkey_list_set_from_string(&switch_keys, str);
         g_variant_unref(value);
     } else {
-	hotkey_list_append(&hangul_keys, IBUS_Hangul, 0);
-	hotkey_list_append(&hangul_keys, IBUS_space, IBUS_SHIFT_MASK);
+	hotkey_list_append(&switch_keys, IBUS_Hangul, 0);
+	hotkey_list_append(&switch_keys, IBUS_space, IBUS_SHIFT_MASK);
     }
 
     hotkey_list_init(&hanja_keys);
@@ -351,7 +351,7 @@ ibus_hangul_exit (void)
 	keymap = NULL;
     }
 
-    hotkey_list_fini (&hangul_keys);
+    hotkey_list_fini (&switch_keys);
     hotkey_list_fini (&hanja_keys);
     hotkey_list_fini (&on_keys);
     hotkey_list_fini (&off_keys);
@@ -1042,10 +1042,10 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     // right hanja key event, we don't have preedit string to be changed
     // to hanja word.
     // See this bug: http://code.google.com/p/ibus/issues/detail?id=1036
-    if (hotkey_list_has_modifier(&hangul_keys, keyval))
+    if (hotkey_list_has_modifier(&switch_keys, keyval))
         return FALSE;
 
-    if (hotkey_list_match(&hangul_keys, keyval, modifiers)) {
+    if (hotkey_list_match(&switch_keys, keyval, modifiers)) {
         ibus_hangul_engine_toggle_input_mode (hangul);
         return TRUE;
     }
@@ -1477,9 +1477,9 @@ ibus_config_value_changed (IBusConfig   *config,
             word_commit = g_variant_get_boolean (value);
         } else if (strcmp (name, "auto-reorder") == 0) {
             auto_reorder = g_variant_get_boolean (value);
-        } else if (strcmp (name, "hangul-keys") == 0) {
+        } else if (strcmp (name, "switch-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
-	    hotkey_list_set_from_string(&hangul_keys, str);
+	    hotkey_list_set_from_string(&switch_keys, str);
         }
     } else if (strcmp(section, "panel") == 0) {
         if (strcmp(name, "lookup-table-orientation") == 0) {

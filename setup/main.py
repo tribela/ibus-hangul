@@ -91,7 +91,7 @@ class Setup ():
         model = Gtk.ListStore(str)
 
         default = GLib.Variant.new_string("Hangul,Shift+space")
-        keylist_str = self.__read("hangul-keys", default).get_string()
+        keylist_str = self.__read("switch-keys", default).get_string()
         self.__hangul_key_list_str = keylist_str.split(',')
         for i in self.__hangul_key_list_str:
             model.append([i])
@@ -176,7 +176,7 @@ class Setup ():
             else:
                 str += model.get_value(iter, 0)
             iter = model.iter_next(iter)
-        self.__write("hangul-keys", GLib.Variant.new_string(str))
+        self.__write("switch-keys", GLib.Variant.new_string(str))
 
         model = self.__hanja_key_list.get_model()
         str = ""
@@ -256,7 +256,7 @@ class Setup ():
                     if i[1] == value:
                         self.__hangul_keyboard.set_active(i[2])
                         break
-            elif name == "hangul-keys":
+            elif name == "switch-keys":
                 self.__hangul_key_list_str = value.split(',')
             elif name == "hanja-keys":
                 self.__hanja_key_list_str = value.split(',')
