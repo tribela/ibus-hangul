@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-04-15 23:46+0900\n"
+"POT-Creation-Date: 2014-08-15 18:52+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,11 +24,15 @@ msgid ""
 "If you want to use it, click \"Ok\" or click \"Cancel\""
 msgstr ""
 
-#: ../setup/main.py:153
+#: ../setup/main.py:204
+msgid "Select Hangul toggle key"
+msgstr ""
+
+#: ../setup/main.py:228
 msgid "Select Hanja key"
 msgstr ""
 
-#: ../setup/main.py:200
+#: ../setup/main.py:281
 msgid ""
 "IBus daemon is not running.\n"
 "Hangul engine settings cannot be saved."
@@ -43,23 +47,23 @@ msgid "Set IBus Hangul Preferences"
 msgstr ""
 
 #: ../setup/setup.ui.h:1
-msgid "<b>Etc</b>"
+msgid "IBusHangul Setup"
 msgstr ""
 
 #: ../setup/setup.ui.h:2
-msgid "<b>Hanja key</b>"
-msgstr ""
-
-#: ../setup/setup.ui.h:3
 msgid "<b>Keyboard Layout</b>"
 msgstr ""
 
+#: ../setup/setup.ui.h:3
+msgid "Hangul _keyboard:"
+msgstr ""
+
 #: ../setup/setup.ui.h:4
-msgid "Advanced"
+msgid "<b>Etc</b>"
 msgstr ""
 
 #: ../setup/setup.ui.h:5
-msgid "Automatic _reordering"
+msgid "Start in _hangul mode"
 msgstr ""
 
 #: ../setup/setup.ui.h:6
@@ -67,34 +71,50 @@ msgid "Commit in _word unit"
 msgstr ""
 
 #: ../setup/setup.ui.h:7
-msgid "Hangul"
+msgid "Automatic _reordering"
 msgstr ""
 
 #: ../setup/setup.ui.h:8
-msgid "Hanja"
+msgid "<b>Hangul toggle key</b>"
 msgstr ""
 
 #: ../setup/setup.ui.h:9
-msgid "IBusHangul Setup"
+msgid "Hangul"
 msgstr ""
 
 #: ../setup/setup.ui.h:10
-msgid "_Hangul keyboard:"
+msgid "<b>Hanja key</b>"
 msgstr ""
 
-#: ../src/engine.c:350
+#: ../setup/setup.ui.h:11
+msgid "Hanja"
+msgstr ""
+
+#: ../setup/setup.ui.h:12
+msgid "Advanced"
+msgstr ""
+
+#: ../src/engine.c:425
+msgid "Hangul mode"
+msgstr ""
+
+#: ../src/engine.c:426
+msgid "Enable/Disable Hangul mode"
+msgstr ""
+
+#: ../src/engine.c:440
 msgid "Hanja lock"
 msgstr ""
 
-#: ../src/engine.c:351
+#: ../src/engine.c:441
 msgid "Enable/Disable Hanja mode"
 msgstr ""
 
-#: ../src/engine.c:362
+#: ../src/engine.c:452
 msgid "Setup"
 msgstr ""
 
-#: ../src/engine.c:363
+#: ../src/engine.c:453
 msgid "Configure hangul engine"
 msgstr ""
 

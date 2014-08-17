@@ -7,10 +7,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ibus-hangul\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-04-15 23:46+0900\n"
+"POT-Creation-Date: 2014-08-15 18:52+0900\n"
 "PO-Revision-Date: 2009-02-18 23:32+0900\n"
 "Last-Translator: Choe Hwanjin <choe.hwanjin@gmail.com>\n"
-"Language-Team: korean <ko@li.org>\n"
+"Language-Team: Choe Hwanjin <choe.hwanjin@gmail.com>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -22,16 +22,20 @@ msgid ""
 "displayed below.\n"
 "If you want to use it, click \"Ok\" or click \"Cancel\""
 msgstr ""
-"한자키로 사용하고자 하는 키를 입력하십시오. 그러면 그 키가 아래에 표시될 것입"
-"니다.\n"
+"한자키로 사용하고자 하는 키를 입력하십시오. 그러면 그 키가 아래에 표시됩니"
+"다.\n"
 "그 키를 사용하시려면 \"확인\"을 누르시고, 사용하지 않으시려면 \"취소\"를누르"
 "십시오."
 
-#: ../setup/main.py:153
+#: ../setup/main.py:204
+msgid "Select Hangul toggle key"
+msgstr "한영전환키를 선택하시오"
+
+#: ../setup/main.py:228
 msgid "Select Hanja key"
 msgstr "한자키를 선택하시오"
 
-#: ../setup/main.py:200
+#: ../setup/main.py:281
 msgid ""
 "IBus daemon is not running.\n"
 "Hangul engine settings cannot be saved."
@@ -48,58 +52,74 @@ msgid "Set IBus Hangul Preferences"
 msgstr "IBus 한글 엔진을 설정합니다"
 
 #: ../setup/setup.ui.h:1
-msgid "<b>Etc</b>"
-msgstr "<b>기타</b>"
+msgid "IBusHangul Setup"
+msgstr "IBus 한글 설정"
 
 #: ../setup/setup.ui.h:2
-msgid "<b>Hanja key</b>"
-msgstr "<b>한자키</b>"
-
-#: ../setup/setup.ui.h:3
 msgid "<b>Keyboard Layout</b>"
 msgstr "<b>자판 설정</b>"
 
+#: ../setup/setup.ui.h:3
+msgid "Hangul _keyboard:"
+msgstr "한글 자판(_K):"
+
 #: ../setup/setup.ui.h:4
-msgid "Advanced"
-msgstr "고급"
+msgid "<b>Etc</b>"
+msgstr "<b>기타</b>"
 
 #: ../setup/setup.ui.h:5
-msgid "Automatic _reordering"
-msgstr "자동 순서 교정(_R)"
+msgid "Start in _hangul mode"
+msgstr "한글 모드로 시작(_H)"
 
 #: ../setup/setup.ui.h:6
 msgid "Commit in _word unit"
 msgstr "단어 단위로 입력(_W)"
 
 #: ../setup/setup.ui.h:7
+msgid "Automatic _reordering"
+msgstr "자동 순서 교정(_R)"
+
+#: ../setup/setup.ui.h:8
+msgid "<b>Hangul toggle key</b>"
+msgstr "<b>한영전환키</b>"
+
+#: ../setup/setup.ui.h:9
 msgid "Hangul"
 msgstr "한글"
 
-#: ../setup/setup.ui.h:8
+#: ../setup/setup.ui.h:10
+msgid "<b>Hanja key</b>"
+msgstr "<b>한자키</b>"
+
+#: ../setup/setup.ui.h:11
 msgid "Hanja"
 msgstr "한자"
 
-#: ../setup/setup.ui.h:9
-msgid "IBusHangul Setup"
-msgstr "IBus 한글 설정"
+#: ../setup/setup.ui.h:12
+msgid "Advanced"
+msgstr "고급"
 
-#: ../setup/setup.ui.h:10
-msgid "_Hangul keyboard:"
-msgstr "한글 자판(_H)"
+#: ../src/engine.c:425
+msgid "Hangul mode"
+msgstr "한글 상태"
 
-#: ../src/engine.c:350
+#: ../src/engine.c:426
+msgid "Enable/Disable Hangul mode"
+msgstr "한글 입력 모드를 선택합니다"
+
+#: ../src/engine.c:440
 msgid "Hanja lock"
 msgstr "한자 전용"
 
-#: ../src/engine.c:351
+#: ../src/engine.c:441
 msgid "Enable/Disable Hanja mode"
 msgstr "한자 전용 모드 선택합니다"
 
-#: ../src/engine.c:362
+#: ../src/engine.c:452
 msgid "Setup"
 msgstr "설정"
 
-#: ../src/engine.c:363
+#: ../src/engine.c:453
 msgid "Configure hangul engine"
 msgstr "한글 입력기를 설정합니다"
 
