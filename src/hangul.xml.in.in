@@ -17,7 +17,8 @@
 			<license>GPL</license>
 			<author>Peng Huang &lt;shawn.p.huang@gmail.com&gt;</author>
 			<icon>ibus-hangul</icon>
-			<layout>us</layout>
+			<layout>kr</layout>
+			<layout_variant>kr104</layout_variant>
 			<longname>Hangul</longname>
 			<description>Korean Input Method</description>
 			<rank>99</rank>
