@@ -73,7 +73,7 @@ ibus-setup-hangul: ibus-setup-hangul.in config.py Makefile
 	    -e 's&\@PYTHON\@&$(PYTHON)&g' $< > $@
 
 install-exec-hook:
-	$(mkdir_p) $(DESTDIR)$(bindir)
+	$(MKDIR_P) $(DESTDIR)$(bindir)
 	cd $(DESTDIR)$(bindir) && \
 	rm -f ibus-setup-hangul && \
 	a="$(bindir)"; b="$(libexecdir)"; updir=""; downdir=""; \
