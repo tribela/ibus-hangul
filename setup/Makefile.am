@@ -31,13 +31,6 @@ setup_hanguldir = $(pkgdatadir)/setup
 
 libexec_SCRIPTS = ibus-setup-hangul
 
-setuplibdir = $(pkglibdir)/setup
-setuplib_PROGRAMS = hangul_keyboard_list
-
-hangul_keyboard_list_SOURCES = hangul_keyboard_list.c
-hangul_keyboard_list_CFLAGS = $(HANGUL_CFLAGS)
-hangul_keyboard_list_LDADD = $(HANGUL_LIBS)
-
 desktop_in_files = ibus-setup-hangul.desktop.in
 desktop_DATA = ibus-setup-hangul.desktop
 desktopdir = $(datadir)/applications
@@ -76,7 +69,8 @@ config.py: config.py.in Makefile
 	    -e 's&@SETUP_PKGLIBDIR@&$(pkglibdir)&g' $< > $@
 
 ibus-setup-hangul: ibus-setup-hangul.in config.py Makefile
-	sed -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' $< > $@
+	sed -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' \
+	    -e 's&\@PYTHON\@&$(PYTHON)&g' $< > $@
 
 install-exec-hook:
 	$(mkdir_p) $(DESTDIR)$(bindir)

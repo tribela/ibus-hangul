@@ -26,10 +26,29 @@ from gi.repository import IBus
 import locale
 import gettext
 import config
-import subprocess
 from keycapturedialog import KeyCaptureDialog
 
 _ = lambda a : gettext.dgettext(config.gettext_package, a)
+
+
+def get_hangul_keyboard_list():
+    from ctypes import CDLL, c_int, c_char_p
+    libhangul = CDLL('libhangul.so.1')
+    libhangul.hangul_ic_get_n_keyboards.argtypes = []
+    libhangul.hangul_ic_get_n_keyboards.restype = c_int
+    libhangul.hangul_ic_get_keyboard_id.argtypes = [c_int]
+    libhangul.hangul_ic_get_keyboard_id.restype = c_char_p
+    libhangul.hangul_ic_get_keyboard_name.argtypes = [c_int]
+    libhangul.hangul_ic_get_keyboard_name.restype = c_char_p
+
+    n = libhangul.hangul_ic_get_n_keyboards()
+    list = []
+    for i in range(n):
+        id = libhangul.hangul_ic_get_keyboard_id(i).decode('UTF-8')
+        name = libhangul.hangul_ic_get_keyboard_name(i).decode('UTF-8')
+        list.append((id, name))
+    return list
+
 
 class Setup ():
     def __init__ (self, bus):
@@ -43,17 +62,14 @@ class Setup ():
         self.__builder.add_from_file(ui_file)
 
         # Hangul tab
-        pipe = subprocess.Popen([config.setuplibdir + '/hangul_keyboard_list'], stdout = subprocess.PIPE)
-        list = pipe.communicate()[0].split('\n')
+        list = get_hangul_keyboard_list()
         
         self.__hangul_keyboard = self.__builder.get_object("HangulKeyboard")
         model = Gtk.ListStore(str, str, int)
         i = 0
-        for line in list:
-            items = line.split('\t')
-            if len(items) > 1:
-                model.append([items[1], items[0], i])
-                i+=1
+        for (id, name) in list:
+            model.append([name, id, i])
+            i+=1
 
         self.__hangul_keyboard.set_model(model)
         renderer = Gtk.CellRendererText()
