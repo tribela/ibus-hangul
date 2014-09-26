@@ -19,7 +19,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 setup_hangul_PYTHON = \
-	config.py \
 	main.py \
 	keycapturedialog.py \
 	setup.ui \
