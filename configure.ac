@@ -67,7 +67,12 @@ PKG_CHECK_MODULES(HANGUL, [
 AC_PATH_PROG(ENV_PROG, env)
 AC_SUBST(ENV_PROG)
 
-#check python
+# Define python version
+AC_ARG_WITH(python,
+    AS_HELP_STRING([--with-python[=PATH]],
+        [Select python2 or python3]),
+    [PYTHON=$with_python], []
+)
 AM_PATH_PYTHON([2.5])
 
 # define GETTEXT_* variables
