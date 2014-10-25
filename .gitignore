@@ -51,7 +51,6 @@ po/stamp-it
 # files for setup
 setup/config.py
 setup/ibus-setup-hangul
-setup/hangul_keyboard_list
 
 # files for engine
 src/test.sh
