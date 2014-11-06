@@ -64,8 +64,7 @@ test:
 config.py: config.py.in Makefile
 	sed -e 's&@SETUP_GETTEXT_PACKAGE@&$(GETTEXT_PACKAGE)&g' \
 	    -e 's&@SETUP_LOCALEDIR@&$(localedir)&g' \
-	    -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' \
-	    -e 's&@SETUP_PKGLIBDIR@&$(pkglibdir)&g' $< > $@
+	    -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' $< > $@
 
 ibus-setup-hangul: ibus-setup-hangul.in config.py Makefile
 	sed -e 's&@SETUP_PKGDATADIR@&$(pkgdatadir)&g' \
