@@ -42,10 +42,13 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{name}.lang
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING README
+%{_bindir}/ibus-setup-hangul
 %{_libexecdir}/ibus-engine-hangul
 %{_libexecdir}/ibus-setup-hangul
+%{_datadir}/applications
 %{_datadir}/@PACKAGE@
 %{_datadir}/ibus/component/*
+%{_datadir}/icons
 
 %changelog
 * Fri Aug 08 2008 Huang Peng <shawn.p.huang@gmail.com> - @VERSION@-1
