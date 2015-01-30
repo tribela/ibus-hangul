@@ -80,9 +80,6 @@ GETTEXT_PACKAGE=ibus-hangul
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Define to the read-only architecture-independent data directory.])
 
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.17])
-
 
 # OUTPUT files
 AC_CONFIG_FILES([ po/Makefile.in
