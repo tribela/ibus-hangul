@@ -59,10 +59,25 @@ static void
 start_component (void)
 {
     IBusComponent *component;
+    IBusConfig* config;
+    gboolean res;
 
     ibus_init ();
 
     bus = ibus_bus_new ();
+
+    res = ibus_bus_is_connected (bus);
+    if (!res) {
+        g_warning ("Unable to connect to IBus");
+        exit (2);
+    }
+
+    config = ibus_bus_get_config (bus);
+    if (config == NULL) {
+        g_warning ("Unable to connect to IBus config component");
+        exit (3);
+    }
+
     g_signal_connect (bus, "disconnected", G_CALLBACK (ibus_disconnected_cb), NULL);
 
     ibus_hangul_init (bus);
