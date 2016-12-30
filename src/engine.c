@@ -1191,7 +1191,54 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
             ibus_hangul_engine_flush (hangul);
     }
 
-    return retval;
+    /* We always return TRUE here even if we didn't use this event.
+     * Instead, we forward the event to clients.
+     *
+     * Because IBus has a problem with sync mode.
+     * I think it's limitations of IBus implementation.
+     * We call several engine functions(updating preedit text and committing
+     * text) inside this function.
+     * But clients cannot receive the results of other calls until this
+     * function ends. Clients only get one result from a remote call at a time
+     * because clients may run on event loop.
+     * Clients may process this event first and then get the results which
+     * may change the preedit text or commit text.
+     * So the event order is broken.
+     * Call order:
+     *      engine                          client
+     *                                      call process_key_event
+     *      begin process_key_event
+     *        call commit_text
+     *        call update_preedit_text
+     *      return the event as unused
+     *                                      receive the result of process_key_event
+     *                                      receive the result of commit_text
+     *                                      receive the result of update_preedit_text
+     *
+     * To solve this problem, we return TRUE as if we consumed this event.
+     * After that, we forward this event to clients.
+     * Then clients may get the events in correct order.
+     * This approach is a kind of async processing.
+     * Call order:
+     *      engine                          client
+     *                                      call process_key_event
+     *      begin process_key_event
+     *        call commit_text
+     *        call update_preedit_text
+     *        call forward_key_event
+     *      return the event as used
+     *                                      receive the result of process_key_event
+     *                                      receive the result of commit_text
+     *                                      receive the result of update_preedit_text
+     *                                      receive the forwarded key event
+     *
+     * See: https://github.com/choehwanjin/ibus-hangul/issues/40
+     */
+    if (!retval) {
+        ibus_engine_forward_key_event (engine, keyval, keycode, modifiers);
+    }
+
+    return TRUE;
 }
 
 static void
