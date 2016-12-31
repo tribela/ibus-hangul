@@ -38,8 +38,8 @@ typedef struct _IBusHangulEngineClass IBusHangulEngineClass;
 typedef struct _HotkeyList HotkeyList;
 
 enum {
-    INPUT_MODE_DIRECT,
     INPUT_MODE_HANGUL,
+    INPUT_MODE_LATIN,
     INPUT_MODE_COUNT,
 };
 
@@ -147,7 +147,7 @@ static void ibus_hangul_engine_update_lookup_table
                                             (IBusHangulEngine       *hangul);
 static gboolean ibus_hangul_engine_has_preedit
                                             (IBusHangulEngine       *hangul);
-static void ibus_hangul_engine_toggle_input_mode
+static void ibus_hangul_engine_switch_input_mode
                                             (IBusHangulEngine       *hangul);
 static void ibus_hangul_engine_set_input_mode
                                             (IBusHangulEngine       *hangul,
@@ -207,7 +207,7 @@ static IBusKeymap *keymap = NULL;
 static gboolean word_commit = FALSE;
 static gboolean auto_reorder = TRUE;
 static gboolean disable_latin_mode = FALSE;
-static int initial_input_mode = INPUT_MODE_DIRECT;
+static int initial_input_mode = INPUT_MODE_LATIN;
 
 static glong
 ucschar_strlen (const ucschar* str)
@@ -335,7 +335,7 @@ ibus_hangul_init (IBusBus *bus)
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
         if (strcmp(str, "latin") == 0) {
-            initial_input_mode = INPUT_MODE_DIRECT;
+            initial_input_mode = INPUT_MODE_LATIN;
         } else if (strcmp(str, "hangul") == 0) {
             initial_input_mode = INPUT_MODE_HANGUL;
         }
@@ -1058,7 +1058,7 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         return FALSE;
 
     if (hotkey_list_match(&switch_keys, keyval, modifiers)) {
-        ibus_hangul_engine_toggle_input_mode (hangul);
+        ibus_hangul_engine_switch_input_mode (hangul);
         return TRUE;
     }
 
@@ -1067,13 +1067,13 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         return FALSE;
     }
 
-    if (hangul->input_mode == INPUT_MODE_DIRECT)
+    if (hangul->input_mode == INPUT_MODE_LATIN)
         return FALSE;
 
     /* This feature is for vi* users.
      * On Esc, the input mode is changed to latin */
     if (hotkey_list_match (&off_keys, keyval, modifiers)) {
-        ibus_hangul_engine_set_input_mode (hangul, INPUT_MODE_DIRECT);
+        ibus_hangul_engine_set_input_mode (hangul, INPUT_MODE_LATIN);
         /* If we return TRUE, then vi will not receive "ESC" key event. */
         return FALSE;
     }
@@ -1403,7 +1403,7 @@ ibus_hangul_engine_property_activate (IBusEngine    *engine,
     } else if (strcmp(prop_name, "InputMode") == 0) {
         IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
-        ibus_hangul_engine_toggle_input_mode (hangul);
+        ibus_hangul_engine_switch_input_mode (hangul);
     } else if (strcmp(prop_name, "hanja_mode") == 0) {
         IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
@@ -1439,14 +1439,13 @@ ibus_hangul_engine_has_preedit (IBusHangulEngine *hangul)
 }
 
 static void
-ibus_hangul_engine_toggle_input_mode (IBusHangulEngine *hangul)
+ibus_hangul_engine_switch_input_mode (IBusHangulEngine *hangul)
 {
-    int input_mode;
+    int input_mode = hangul->input_mode + 1;
 
-    if (hangul->input_mode == INPUT_MODE_HANGUL)
-        input_mode = INPUT_MODE_DIRECT;
-    else
+    if (input_mode >= INPUT_MODE_COUNT) {
         input_mode = INPUT_MODE_HANGUL;
+    }
 
     ibus_hangul_engine_set_input_mode (hangul, input_mode);
 }
@@ -1458,10 +1457,10 @@ ibus_hangul_engine_get_input_mode_symbol (IBusHangulEngine *hangul,
     IBusText **symbols = hangul->input_mode_symbols;
 
     if (symbols[0] == NULL) {
-        symbols[INPUT_MODE_DIRECT] = ibus_text_new_from_string ("A");
-        g_object_ref_sink(symbols[INPUT_MODE_DIRECT]);
         symbols[INPUT_MODE_HANGUL] = ibus_text_new_from_string ("한");
         g_object_ref_sink(symbols[INPUT_MODE_HANGUL]);
+        symbols[INPUT_MODE_LATIN] = ibus_text_new_from_string ("EN");
+        g_object_ref_sink(symbols[INPUT_MODE_LATIN]);
     }
 
     if (input_mode >= INPUT_MODE_COUNT)
