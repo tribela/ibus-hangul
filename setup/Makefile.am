@@ -58,7 +58,7 @@ EXTRA_DIST = \
 
 test:
 	$(ENV_PROG) DBUS_DEBUG=true \
-	       PYTHONPATH=$(abs_top_srcdir):$(pyexecdir) \
+	       PYTHONPATH=$(abs_builddir):$(pyexecdir) \
 	       $(PYTHON) $(srcdir)/main.py
 
 config.py: config.py.in Makefile

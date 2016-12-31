@@ -12,10 +12,7 @@ class KeyCaptureDialog ():
                         Gtk.MessageType.INFO,
                         Gtk.ButtonsType.OK_CANCEL,
                         "")
-        self.__dialog.set_markup(_("Press any key which you want to use as hanja key. "
-                "The key you pressed is displayed below.\n"
-                "If you want to use it, click \"Ok\" or click \"Cancel\""))
-
+        self.__dialog.set_markup(" ")
         self.__dialog.format_secondary_markup(" ")
         self.__dialog.connect("key-press-event", self.on_keypress, None)
 
@@ -24,6 +21,9 @@ class KeyCaptureDialog ():
 
     def run(self):
         return self.__dialog.run()
+
+    def set_markup(self, text):
+        self.__dialog.set_markup(text)
 
     def get_key_string(self):
         return self.__key_str

@@ -218,6 +218,9 @@ class Setup ():
 
     def on_hangul_key_add(self, widget, data = None):
         dialog = KeyCaptureDialog(_("Select Hangul toggle key"), self.__window)
+        dialog.set_markup(_("Press any key which you want to use as hangul toggle key. "
+                "The key you pressed is displayed below.\n"
+                "If you want to use it, click \"Ok\" or click \"Cancel\""))
         res = dialog.run()
         if res == Gtk.ResponseType.OK:
             key_str = dialog.get_key_string()
@@ -242,6 +245,9 @@ class Setup ():
 
     def on_hanja_key_add(self, widget, data = None):
         dialog = KeyCaptureDialog(_("Select Hanja key"), self.__window)
+        dialog.set_markup(_("Press any key which you want to use as hanja key. "
+                "The key you pressed is displayed below.\n"
+                "If you want to use it, click \"Ok\" or click \"Cancel\""))
         res = dialog.run()
         if res == Gtk.ResponseType.OK:
             key_str = dialog.get_key_string()
