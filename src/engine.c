@@ -206,6 +206,7 @@ static int lookup_table_orientation = 0;
 static IBusKeymap *keymap = NULL;
 static gboolean word_commit = FALSE;
 static gboolean auto_reorder = TRUE;
+static gboolean disable_latin_mode = FALSE;
 static int initial_input_mode = INPUT_MODE_DIRECT;
 
 static glong
@@ -324,6 +325,12 @@ ibus_hangul_init (IBusBus *bus)
         g_variant_unref (value);
     }
 
+    value = ibus_config_get_value (config, "engine/hangul", "disable-latin-mode");
+    if (value != NULL) {
+        disable_latin_mode = g_variant_get_boolean (value);
+        g_variant_unref (value);
+    }
+
     value = ibus_config_get_value (config, "engine/hangul", "initial-input-mode");
     if (value != NULL) {
         const gchar* str = g_variant_get_string (value, NULL);
@@ -420,6 +427,10 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     hangul->hanja_mode = FALSE;
     hangul->last_lookup_method = LOOKUP_METHOD_PREFIX;
 
+    if (disable_latin_mode) {
+        hangul->input_mode = INPUT_MODE_HANGUL;
+    }
+
     hangul->prop_list = ibus_prop_list_new ();
     g_object_ref_sink (hangul->prop_list);
 
@@ -432,7 +443,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
                               tooltip,
                               TRUE, TRUE, PROP_STATE_UNCHECKED, NULL);
     symbol = ibus_hangul_engine_get_input_mode_symbol (hangul,
-                                                       initial_input_mode);
+                                                       hangul->input_mode);
     ibus_property_set_symbol(prop, symbol);
     g_object_ref_sink (prop);
     ibus_prop_list_append (hangul->prop_list, prop);
@@ -1466,6 +1477,10 @@ ibus_hangul_engine_set_input_mode (IBusHangulEngine *hangul, int input_mode)
     IBusProperty* prop;
 
     ibus_hangul_engine_flush (hangul);
+
+    if (disable_latin_mode) {
+        return;
+    }
 
     prop = hangul->prop_hangul_mode;
 
