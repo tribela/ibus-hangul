@@ -44,7 +44,7 @@ enum {
 };
 
 struct _IBusHangulEngine {
-    IBusEngine parent;
+    IBusEngineSimple parent;
 
     /* members */
     HangulInputContext *context;
@@ -64,7 +64,7 @@ struct _IBusHangulEngine {
 };
 
 struct _IBusHangulEngineClass {
-    IBusEngineClass parent;
+    IBusEngineSimpleClass parent;
 };
 
 struct KeyEvent {
@@ -193,7 +193,7 @@ static gboolean hotkey_list_has_modifier    (HotkeyList           *list,
 
 static glong ucschar_strlen (const ucschar* str);
 
-static IBusEngineClass *parent_class = NULL;
+static IBusEngineSimpleClass *parent_class = NULL;
 static HanjaTable *hanja_table = NULL;
 static HanjaTable *symbol_table = NULL;
 static IBusConfig *config = NULL;
@@ -236,7 +236,7 @@ ibus_hangul_engine_get_type (void)
     };
 
     if (type == 0) {
-            type = g_type_register_static (IBUS_TYPE_ENGINE,
+            type = g_type_register_static (IBUS_TYPE_ENGINE_SIMPLE,
                                            "IBusHangulEngine",
                                            &type_info,
                                            (GTypeFlags) 0);
@@ -384,7 +384,7 @@ ibus_hangul_engine_class_init (IBusHangulEngineClass *klass)
     IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS (klass);
     IBusEngineClass *engine_class = IBUS_ENGINE_CLASS (klass);
 
-    parent_class = (IBusEngineClass *) g_type_class_peek_parent (klass);
+    parent_class = (IBusEngineSimpleClass *) g_type_class_peek_parent (klass);
 
     object_class->constructor = ibus_hangul_engine_constructor;
     ibus_object_class->destroy = (IBusObjectDestroyFunc) ibus_hangul_engine_destroy;
@@ -1068,7 +1068,7 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     }
 
     if (hangul->input_mode == INPUT_MODE_LATIN)
-        return FALSE;
+        return IBUS_ENGINE_CLASS (parent_class)->process_key_event (engine, keyval, keycode, modifiers);
 
     /* This feature is for vi* users.
      * On Esc, the input mode is changed to latin */
@@ -1304,7 +1304,7 @@ ibus_hangul_engine_focus_in (IBusEngine *engine)
         ibus_hangul_engine_update_lookup_table_ui (hangul);
     }
 
-    parent_class->focus_in (engine);
+    IBUS_ENGINE_CLASS (parent_class)->focus_in (engine);
 }
 
 static void
@@ -1323,7 +1323,7 @@ ibus_hangul_engine_focus_out (IBusEngine *engine)
         ibus_engine_hide_auxiliary_text (engine);
     }
 
-    parent_class->focus_out ((IBusEngine *) hangul);
+    IBUS_ENGINE_CLASS (parent_class)->focus_out ((IBusEngine *) hangul);
 }
 
 static void
@@ -1332,13 +1332,13 @@ ibus_hangul_engine_reset (IBusEngine *engine)
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
     ibus_hangul_engine_flush (hangul);
-    parent_class->reset (engine);
+    IBUS_ENGINE_CLASS (parent_class)->reset (engine);
 }
 
 static void
 ibus_hangul_engine_enable (IBusEngine *engine)
 {
-    parent_class->enable (engine);
+    IBUS_ENGINE_CLASS (parent_class)->enable (engine);
 
     ibus_engine_get_surrounding_text (engine, NULL, NULL, NULL);
 }
@@ -1347,19 +1347,19 @@ static void
 ibus_hangul_engine_disable (IBusEngine *engine)
 {
     ibus_hangul_engine_focus_out (engine);
-    parent_class->disable (engine);
+    IBUS_ENGINE_CLASS (parent_class)->disable (engine);
 }
 
 static void
 ibus_hangul_engine_page_up (IBusEngine *engine)
 {
-    parent_class->page_up (engine);
+    IBUS_ENGINE_CLASS (parent_class)->page_up (engine);
 }
 
 static void
 ibus_hangul_engine_page_down (IBusEngine *engine)
 {
-    parent_class->page_down (engine);
+    IBUS_ENGINE_CLASS (parent_class)->page_down (engine);
 }
 
 static void
@@ -1372,7 +1372,7 @@ ibus_hangul_engine_cursor_up (IBusEngine *engine)
         ibus_hangul_engine_update_lookup_table_ui (hangul);
     }
 
-    parent_class->cursor_up (engine);
+    IBUS_ENGINE_CLASS (parent_class)->cursor_up (engine);
 }
 
 static void
@@ -1385,7 +1385,7 @@ ibus_hangul_engine_cursor_down (IBusEngine *engine)
         ibus_hangul_engine_update_lookup_table_ui (hangul);
     }
 
-    parent_class->cursor_down (engine);
+    IBUS_ENGINE_CLASS (parent_class)->cursor_down (engine);
 }
 
 static void
