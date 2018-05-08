@@ -20,9 +20,12 @@
 
 import sys
 import os
+import gi
 from gi.repository import Gio
 from gi.repository import GLib
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+gi.require_version('IBus', '1.0')
 from gi.repository import IBus
 import locale
 import gettext
