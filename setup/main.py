@@ -286,7 +286,8 @@ class Setup ():
 
 if __name__ == "__main__":
     locale.bindtextdomain(config.gettext_package, config.localedir)
-    locale.bind_textdomain_codeset(config.gettext_package, "UTF-8")
+    gettext.bind_textdomain_codeset(config.gettext_package, "UTF-8")
+
     GLib.set_prgname("ibus-setup-hangul")
     GLib.set_application_name(_("IBusHangul Setup"))
 
