@@ -55,7 +55,7 @@ IT_PROG_INTLTOOL([0.35.0])
 
 # check ibus
 PKG_CHECK_MODULES(IBUS, [
-    ibus-1.0 >= 1.3.99
+    ibus-1.0 >= 1.5.4
 ])
 
 # check libhangul

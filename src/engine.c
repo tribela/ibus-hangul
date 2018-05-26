@@ -51,6 +51,7 @@ struct _IBusHangulEngine {
     HangulInputContext *context;
     UString* preedit;
     int input_mode;
+    unsigned int input_purpose;
     gboolean hanja_mode;
     HanjaList* hanja_list;
     int last_lookup_method;
@@ -137,6 +138,10 @@ static void ibus_hangul_engine_candidate_clicked
                                              guint                   index,
                                              guint                   button,
                                              guint                   state);
+static void ibus_hangul_engine_set_content_type
+                                            (IBusEngine             *engine,
+                                             guint                   purpose,
+                                             guint                   hints);
 
 static void ibus_hangul_engine_flush        (IBusHangulEngine       *hangul);
 static void ibus_hangul_engine_clear_preedit_text
@@ -399,6 +404,7 @@ ibus_hangul_engine_class_init (IBusHangulEngineClass *klass)
     engine_class->property_activate = ibus_hangul_engine_property_activate;
 
     engine_class->candidate_clicked = ibus_hangul_engine_candidate_clicked;
+    engine_class->set_content_type = ibus_hangul_engine_set_content_type;
 }
 
 static void
@@ -416,6 +422,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     hangul->preedit = ustring_new();
     hangul->hanja_list = NULL;
     hangul->input_mode = initial_input_mode;
+    hangul->input_purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
     hangul->hanja_mode = FALSE;
     hangul->last_lookup_method = LOOKUP_METHOD_PREFIX;
 
@@ -1041,6 +1048,10 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (keyval == IBUS_Shift_L || keyval == IBUS_Shift_R)
         return FALSE;
 
+    // On password mode, we ignore hotkeys
+    if (hangul->input_purpose == IBUS_INPUT_PURPOSE_PASSWORD)
+        return IBUS_ENGINE_CLASS (parent_class)->process_key_event (engine, keyval, keycode, modifiers);
+
     // If a hotkey has any modifiers, we ignore that modifier
     // keyval, or we cannot make the hanja key work.
     // Because when we get the modifier key alone, we commit the
@@ -1625,6 +1636,18 @@ ibus_hangul_engine_candidate_clicked (IBusEngine     *engine,
     } else {
 	ibus_hangul_engine_hide_lookup_table (hangul);
     }
+}
+
+static void
+ibus_hangul_engine_set_content_type (IBusEngine     *engine,
+                                     guint           purpose,
+                                     guint           hints)
+{
+    IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
+    if (hangul == NULL)
+        return;
+
+    hangul->input_purpose = purpose;
 }
 
 static void
