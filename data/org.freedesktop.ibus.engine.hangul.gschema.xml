@@ -47,5 +47,10 @@
       <summary>Disable Latin mode</summary>
       <description></description>
     </key>
+    <key name="use-event-forwarding" type="b">
+      <default>true</default>
+      <summary>Enable event forwarding workaround</summary>
+      <description></description>
+    </key>
   </schema>
 </schemalist>

@@ -213,6 +213,10 @@ static gboolean word_commit = FALSE;
 static gboolean auto_reorder = TRUE;
 static gboolean disable_latin_mode = FALSE;
 static int initial_input_mode = INPUT_MODE_LATIN;
+/**
+ * whether to use event forwarding workaround
+ */
+static gboolean use_event_forwarding = TRUE;
 
 static glong
 ucschar_strlen (const ucschar* str)
@@ -336,6 +340,12 @@ ibus_hangul_init (IBusBus *bus)
         } else if (strcmp(str, "hangul") == 0) {
             initial_input_mode = INPUT_MODE_HANGUL;
         }
+        g_clear_pointer (&value, g_variant_unref);
+    }
+
+    value = g_settings_get_value (settings_hangul, "use-event-forwarding");
+    if (value != NULL) {
+        use_event_forwarding = g_variant_get_boolean (value);
         g_clear_pointer (&value, g_variant_unref);
     }
 
@@ -1250,11 +1260,15 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
      *
      * See: https://github.com/choehwanjin/ibus-hangul/issues/40
      */
-    if (!retval) {
-        ibus_engine_forward_key_event (engine, keyval, keycode, modifiers);
+    if (use_event_forwarding) {
+        if (!retval) {
+            ibus_engine_forward_key_event (engine, keyval, keycode, modifiers);
+        }
+
+        return TRUE;
     }
 
-    return TRUE;
+    return retval;
 }
 
 static void
