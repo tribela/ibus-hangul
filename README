@@ -5,7 +5,8 @@ ibus-hangul is a Korean input method engine for IBus.
 
 The official web site is:
 
-    http://code.google.com/p/ibus/
+    ibus: https://github.com/ibus/ibus/wiki
+    ibus-hangul: https://github.com/libhangul/ibus-hangul/wiki
 
 
 Installation
@@ -22,4 +23,10 @@ Install procedure:
 Bug report
 ----------
 
-http://code.google.com/p/ibus/issues/list
+https://github.com/libhangul/ibus-hangul/issues
+
+
+Download
+--------
+
+https://github.com/libhangul/ibus-hangul/releases
