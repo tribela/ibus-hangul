@@ -151,17 +151,20 @@ class Setup ():
         self.__window = self.__builder.get_object("SetupDialog")
         icon_file = os.path.join(config.pkgdatadir, "icons", "ibus-hangul.svg")
         self.__window.set_icon_from_file(icon_file)
-        self.__window.connect("response", self.on_response, None)
         self.__window.show()
 
-        ok_button = self.__builder.get_object("button_cancel")
-        ok_button.grab_focus()
+        button = self.__builder.get_object("button_apply")
+        button.connect("clicked", self.on_apply, None)
+
+        button = self.__builder.get_object("button_cancel")
+        button.connect("clicked", self.on_cancel, None)
+        #button.grap_focus()
+
+        button = self.__builder.get_object("button_ok")
+        button.connect("clicked", self.on_ok, None)
 
     def run(self):
-        res = self.__window.run()
-        if (res == Gtk.ResponseType.OK):
-            self.on_ok()
-        self.__window.destroy()
+        Gtk.main()
 
     def apply(self):
         model = self.__hangul_keyboard.get_model()
@@ -204,15 +207,17 @@ class Setup ():
             iter = model.iter_next(iter)
         self.__write("hanja-keys", GLib.Variant.new_string(str))
 
-    def on_response(self, widget, id, data = None):
-        if id == Gtk.ResponseType.APPLY:
-            self.apply()
-            widget.emit_stop_by_name("response")
-        if id == Gtk.ResponseType.NONE:
-            widget.emit_stop_by_name("response")
-
-    def on_ok(self):
+    def on_apply(self, widget, data):
         self.apply()
+
+    def on_cancel(self, widget, data):
+        self.__window.destroy()
+        Gtk.main_quit()
+
+    def on_ok(self, widget, data):
+        self.apply()
+        self.__window.destroy()
+        Gtk.main_quit()
 
     def on_hangul_key_add(self, widget, data = None):
         dialog = KeyCaptureDialog(_("Select Hangul toggle key"), self.__window)
