@@ -1574,6 +1574,13 @@ settings_changed (GSettings    *settings,
         } else if (strcmp (key, "off-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&off_keys, str);
+        } else if (strcmp (key, "initial-input-mode") == 0) {
+            const gchar* str = g_variant_get_string (value, NULL);
+            if (strcmp(str, "latin") == 0) {
+                initial_input_mode = INPUT_MODE_LATIN;
+            } else if (strcmp(str, "hangul") == 0) {
+                initial_input_mode = INPUT_MODE_HANGUL;
+            }
         }
     } else if (strcmp (schema_id, "org.freedesktop.ibus.panel") == 0) {
         if (strcmp (key, "lookup-table-orientation") == 0) {
