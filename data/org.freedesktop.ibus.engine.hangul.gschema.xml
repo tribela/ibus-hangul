@@ -38,7 +38,7 @@
       <description></description>
     </key>
     <key name="off-keys" type="s">
-      <default>''</default>
+      <default>'Escape'</default>
       <summary>Off keys</summary>
       <description></description>
     </key>
