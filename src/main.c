@@ -139,6 +139,14 @@ main (gint argc, gchar **argv)
         exit (-1);
     }
 
+    if (verbose) {
+        const gchar* value = g_getenv ("G_MESSAGES_DEBUG");
+        if (value == NULL) {
+            g_setenv ("G_MESSAGES_DEBUG", "all", TRUE);
+        }
+    }
+
     start_component ();
+
     return 0;
 }

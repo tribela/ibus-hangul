@@ -1290,6 +1290,7 @@ ibus_hangul_engine_flush (IBusHangulEngine *hangul)
 	str = ustring_begin (hangul->preedit);
 	text = ibus_text_new_from_ucs4 (str);
 
+        g_debug("flush: %s", text->text);
 	ibus_engine_commit_text ((IBusEngine *) hangul, text);
 
 	ustring_clear(hangul->preedit);
@@ -1503,6 +1504,7 @@ ibus_hangul_engine_set_input_mode (IBusHangulEngine *hangul, int input_mode)
     prop = hangul->prop_hangul_mode;
 
     hangul->input_mode = input_mode;
+    g_debug("input_mode: %s", (input_mode == INPUT_MODE_HANGUL) ? "hangul" : "latin");
 
     symbol = ibus_hangul_engine_get_input_mode_symbol (hangul, input_mode);
     ibus_property_set_symbol(prop, symbol);
