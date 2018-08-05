@@ -42,9 +42,14 @@ intltool-update.in
 # vim temp backup file
 .*.swp
 
+# files for data
+data/org.freedesktop.ibus.engine.hangul.metainfo.xml
+data/org.freedesktop.ibus.engine.hangul.metainfo.xml.h
+
 # files for po
 po/*.gmo
 po/*.pot
+po/.intltool-merge-cache
 po/stamp-po
 po/stamp-it
 
