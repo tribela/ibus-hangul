@@ -31,6 +31,11 @@ symboltable_DATA = \
 
 symboltabledir = $(datadir)/ibus-hangul/data
 
+appstream_in_files = org.freedesktop.ibus.engine.hangul.metainfo.xml.in
+appstream_DATA = $(appstream_in_files:.xml.in=.xml)
+appstreamdir=$(datadir)/metainfo
+@INTLTOOL_XML_RULE@
+
 install-data-hook:
 	if test -z "$(DESTDIR)"; then \
 	    glib-compile-schemas $(schemasdir); \
@@ -46,4 +51,9 @@ uninstall-hook:
 EXTRA_DIST = \
 	$(schemas_DATA) \
 	$(symboltable_DATA) \
+	$(appstream_in_files) \
+	$(NULL)
+
+CLEANFILES = \
+	$(appstream_DATA) \
 	$(NULL)
