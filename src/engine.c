@@ -1063,6 +1063,21 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
     if (hangul->input_purpose == IBUS_INPUT_PURPOSE_PASSWORD)
         return IBUS_ENGINE_CLASS (parent_class)->process_key_event (engine, keyval, keycode, modifiers);
 
+    /* Process candidate key event before hot keys,
+     * or lookup table can't receive important events.
+     * For example, if Esc key is pressed, this key event should be used for
+     * closing lookup table, not for turning to latin mode. */
+    if (hangul->hanja_list != NULL) {
+        retval = ibus_hangul_engine_process_candidate_key_event (hangul,
+                     keyval, modifiers);
+        if (hangul->hanja_mode) {
+            if (retval)
+                return TRUE;
+        } else {
+            return TRUE;
+        }
+    }
+
     // If a hotkey has any modifiers, we ignore that modifier
     // keyval, or we cannot make the hanja key work.
     // Because when we get the modifier key alone, we commit the
@@ -1104,17 +1119,6 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
             ibus_hangul_engine_hide_lookup_table (hangul);
         }
         return TRUE;
-    }
-
-    if (hangul->hanja_list != NULL) {
-        retval = ibus_hangul_engine_process_candidate_key_event (hangul,
-                     keyval, modifiers);
-        if (hangul->hanja_mode) {
-            if (retval)
-                return TRUE;
-        } else {
-            return TRUE;
-        }
     }
 
     // If we've got a key event with some modifiers, commit current
