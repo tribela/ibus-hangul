@@ -763,6 +763,7 @@ ibus_hangul_engine_lookup_hanja_table (const char* key, int method)
         break;
     }
 
+    g_debug("lookup hanja table: %s", key);
     return list;
 }
 
@@ -802,7 +803,7 @@ ibus_hangul_engine_update_hanja_list (IBusHangulEngine *hangul)
                     &cursor_pos, &anchor_pos);
 
             substr = h_ibus_text_get_substring (ibus_text,
-                    cursor_pos - 64, cursor_pos);
+                    (glong)cursor_pos - 32, cursor_pos);
 
             if (substr != NULL) {
                 hanja_key = g_strconcat (substr, preedit_utf8, NULL);
@@ -822,7 +823,7 @@ ibus_hangul_engine_update_hanja_list (IBusHangulEngine *hangul)
             lookup_method = LOOKUP_METHOD_EXACT;
         } else {
             hanja_key = h_ibus_text_get_substring (ibus_text,
-                    cursor_pos - 64, cursor_pos);
+                    (glong)cursor_pos - 32, cursor_pos);
             lookup_method = LOOKUP_METHOD_SUFFIX;
         }
     }
