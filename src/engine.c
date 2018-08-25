@@ -1545,6 +1545,14 @@ ibus_hangul_engine_on_transition (HangulInputContext     *hic,
 }
 
 static void
+print_changed_settings (const gchar *schema_id, const gchar *key, GVariant *value)
+{
+    gchar *variant_printable = g_variant_print (value, FALSE);
+    g_debug ("settings_changed: %s/%s: %s", schema_id, key, variant_printable);
+    g_free (variant_printable);
+}
+
+static void
 settings_changed (GSettings    *settings,
                   const gchar  *key,
                   gpointer      user_data)
@@ -1565,22 +1573,29 @@ settings_changed (GSettings    *settings,
             const gchar *str = g_variant_get_string(value, NULL);
             g_string_assign (hangul_keyboard, str);
             hangul_ic_select_keyboard (hangul->context, hangul_keyboard->str);
+            print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "hanja-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&hanja_keys, str);
+            print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "word-commit") == 0) {
             word_commit = g_variant_get_boolean (value);
+            print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "auto-reorder") == 0) {
             auto_reorder = g_variant_get_boolean (value);
+            print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "switch-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&switch_keys, str);
+            print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "on-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&on_keys, str);
+            print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "off-keys") == 0) {
             const gchar* str = g_variant_get_string(value, NULL);
 	    hotkey_list_set_from_string(&off_keys, str);
+            print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "initial-input-mode") == 0) {
             const gchar* str = g_variant_get_string (value, NULL);
             if (strcmp(str, "latin") == 0) {
@@ -1588,10 +1603,15 @@ settings_changed (GSettings    *settings,
             } else if (strcmp(str, "hangul") == 0) {
                 initial_input_mode = INPUT_MODE_HANGUL;
             }
+            print_changed_settings (schema_id, key, value);
+        } else if (strcmp (key, "use-event-forwarding") == 0) {
+            use_event_forwarding = g_variant_get_boolean (value);
+            print_changed_settings (schema_id, key, value);
         }
     } else if (strcmp (schema_id, "org.freedesktop.ibus.panel") == 0) {
         if (strcmp (key, "lookup-table-orientation") == 0) {
             lookup_table_orientation = g_variant_get_int32(value);
+            print_changed_settings (schema_id, key, value);
         }
     }
     g_variant_unref (value);
