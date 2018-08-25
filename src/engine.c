@@ -47,6 +47,9 @@ enum {
 struct _IBusHangulEngine {
     IBusEngineSimple parent;
 
+    /* unique context id */
+    guint id;
+
     /* members */
     HangulInputContext *context;
     UString* preedit;
@@ -198,6 +201,7 @@ static gboolean hotkey_list_has_modifier    (HotkeyList           *list,
 static glong ucschar_strlen (const ucschar* str);
 
 static IBusEngineSimpleClass *parent_class = NULL;
+static guint last_context_id = 0;
 static HanjaTable *hanja_table = NULL;
 static HanjaTable *symbol_table = NULL;
 static GSettings *settings_hangul = NULL;
@@ -217,6 +221,7 @@ static int initial_input_mode = INPUT_MODE_LATIN;
  * whether to use event forwarding workaround
  */
 static gboolean use_event_forwarding = TRUE;
+
 
 static glong
 ucschar_strlen (const ucschar* str)
@@ -258,6 +263,8 @@ void
 ibus_hangul_init (IBusBus *bus)
 {
     GVariant* value = NULL;
+
+    last_context_id = 0;
 
     hanja_table = hanja_table_load (NULL);
 
@@ -356,11 +363,15 @@ ibus_hangul_init (IBusBus *bus)
     }
 
     keymap = ibus_keymap_get("us");
+
+    g_debug ("init");
 }
 
 void
 ibus_hangul_exit (void)
 {
+    g_debug ("exit");
+
     if (keymap != NULL) {
 	g_object_unref(keymap);
 	keymap = NULL;
@@ -425,6 +436,9 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     IBusText* tooltip;
     IBusText* symbol;
 
+    hangul->id = last_context_id;
+    ++last_context_id;
+
     hangul->context = hangul_ic_new (hangul_keyboard->str);
     hangul_ic_connect_callback (hangul->context, "transition",
                                 ibus_hangul_engine_on_transition, hangul);
@@ -487,6 +501,8 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
                       G_CALLBACK (settings_changed), hangul);
     g_signal_connect (settings_panel, "changed",
                       G_CALLBACK (settings_changed), hangul);
+
+    g_debug ("context new:%u", hangul->id);
 }
 
 static GObject*
@@ -509,6 +525,8 @@ ibus_hangul_engine_destroy (IBusHangulEngine *hangul)
 {
     int i;
     IBusText **symbols;
+
+    g_debug ("context delete:%u", hangul->id);
 
     if (hangul->prop_hangul_mode) {
         g_object_unref (hangul->prop_hangul_mode);
@@ -1295,7 +1313,7 @@ ibus_hangul_engine_flush (IBusHangulEngine *hangul)
 	str = ustring_begin (hangul->preedit);
 	text = ibus_text_new_from_ucs4 (str);
 
-        g_debug("flush: %s", text->text);
+        g_debug ("flush:%u: %s", hangul->id, text->text);
 	ibus_engine_commit_text ((IBusEngine *) hangul, text);
 
 	ustring_clear(hangul->preedit);
@@ -1308,6 +1326,8 @@ static void
 ibus_hangul_engine_focus_in (IBusEngine *engine)
 {
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
+
+    //g_debug ("focus_in: %u", hangul->id);
 
     if (hangul->input_mode == INPUT_MODE_HANGUL) {
         ibus_property_set_state (hangul->prop_hangul_mode, PROP_STATE_CHECKED);
@@ -1337,6 +1357,8 @@ ibus_hangul_engine_focus_out (IBusEngine *engine)
 {
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
+    //g_debug ("focus_out: %u", hangul->id);
+
     if (hangul->hanja_list == NULL) {
 	// ibus-hangul uses
 	// ibus_engine_update_preedit_text_with_mode() function which makes
@@ -1356,6 +1378,8 @@ ibus_hangul_engine_reset (IBusEngine *engine)
 {
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
+    g_debug ("reset:%u", hangul->id);
+
     ibus_hangul_engine_flush (hangul);
     IBUS_ENGINE_CLASS (parent_class)->reset (engine);
 }
@@ -1365,12 +1389,16 @@ ibus_hangul_engine_enable (IBusEngine *engine)
 {
     IBUS_ENGINE_CLASS (parent_class)->enable (engine);
 
+    g_debug ("enable:%u", ((IBusHangulEngine*) engine)->id);
+
     ibus_engine_get_surrounding_text (engine, NULL, NULL, NULL);
 }
 
 static void
 ibus_hangul_engine_disable (IBusEngine *engine)
 {
+    g_debug ("disable:%u", ((IBusHangulEngine*) engine)->id);
+
     ibus_hangul_engine_focus_out (engine);
     IBUS_ENGINE_CLASS (parent_class)->disable (engine);
 }
@@ -1509,7 +1537,8 @@ ibus_hangul_engine_set_input_mode (IBusHangulEngine *hangul, int input_mode)
     prop = hangul->prop_hangul_mode;
 
     hangul->input_mode = input_mode;
-    g_debug("input_mode: %s", (input_mode == INPUT_MODE_HANGUL) ? "hangul" : "latin");
+    g_debug("input_mode:%u: %s", hangul->id,
+            (input_mode == INPUT_MODE_HANGUL) ? "hangul" : "latin");
 
     symbol = ibus_hangul_engine_get_input_mode_symbol (hangul, input_mode);
     ibus_property_set_symbol(prop, symbol);
