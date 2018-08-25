@@ -47,10 +47,10 @@ enum {
 struct _IBusHangulEngine {
     IBusEngineSimple parent;
 
+    /* members */
     /* unique context id */
     guint id;
 
-    /* members */
     HangulInputContext *context;
     UString* preedit;
     int input_mode;
@@ -59,6 +59,7 @@ struct _IBusHangulEngine {
     HanjaList* hanja_list;
     int last_lookup_method;
 
+    guint caps;
     IBusLookupTable *table;
 
     IBusProperty    *prop_hangul_mode;
@@ -115,10 +116,10 @@ static void ibus_engine_set_cursor_location (IBusEngine             *engine,
                                              gint                    y,
                                              gint                    w,
                                              gint                    h);
+#endif
 static void ibus_hangul_engine_set_capabilities
                                             (IBusEngine             *engine,
                                              guint                   caps);
-#endif
 static void ibus_hangul_engine_page_up      (IBusEngine             *engine);
 static void ibus_hangul_engine_page_down    (IBusEngine             *engine);
 static void ibus_hangul_engine_cursor_up    (IBusEngine             *engine);
@@ -416,6 +417,7 @@ ibus_hangul_engine_class_init (IBusHangulEngineClass *klass)
     engine_class->focus_in = ibus_hangul_engine_focus_in;
     engine_class->focus_out = ibus_hangul_engine_focus_out;
 
+    engine_class->set_capabilities = ibus_hangul_engine_set_capabilities;
     engine_class->page_up = ibus_hangul_engine_page_up;
     engine_class->page_down = ibus_hangul_engine_page_down;
 
@@ -449,6 +451,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
     hangul->input_purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
     hangul->hanja_mode = FALSE;
     hangul->last_lookup_method = LOOKUP_METHOD_PREFIX;
+    hangul->caps = 0;
 
     if (disable_latin_mode) {
         hangul->input_mode = INPUT_MODE_HANGUL;
@@ -1401,6 +1404,16 @@ ibus_hangul_engine_disable (IBusEngine *engine)
 
     ibus_hangul_engine_focus_out (engine);
     IBUS_ENGINE_CLASS (parent_class)->disable (engine);
+}
+
+static void
+ibus_hangul_engine_set_capabilities (IBusEngine *engine, guint caps)
+{
+    IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
+
+    hangul->caps = caps;
+
+    g_debug ("set_capabilities:%u: %x", hangul->id, caps);
 }
 
 static void
