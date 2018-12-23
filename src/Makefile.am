@@ -29,6 +29,7 @@ AM_LDFLAGS = \
 	$(NULL)
 
 check_PROGRAMS = \
+	test-ustring
 	$(NULL)
 
 TESTS = \
@@ -82,3 +83,10 @@ hangul.xml: hangul.xml.in
 
 test: ibus-engine-hangul
 	$(builddir)/ibus-engine-hangul
+
+test_ustring_CFLAGS = $(IBUS_CFLAGS) $(HANGUL_CFLAGS)
+test_ustring_LDADD = $(IBUS_LIBS)
+test_ustring_SOURCES = test-ustring.c ustring.c ustring.h
+
+check-local:
+		$(builddir)/test-ustring
