@@ -44,6 +44,30 @@ enum {
     INPUT_MODE_COUNT,
 };
 
+/**
+ * ibus-hangul supports 3 preedit modes.
+ */
+typedef enum {
+    /**
+     * @brief zero length preedit mode
+     * An option to use zero length preedit text.
+     * ibus-hangul will utilize surrounding text feature to draw "composing text".
+     * So the "composing text" will not be shown in preedit style but normal text.
+     */
+    PREEDIT_MODE_NONE,
+    /**
+     * @brief syllable preedit mode
+     * An option to use syllable length preedit text.
+     * This option utilizes preedit text feature.
+     */
+    PREEDIT_MODE_SYLLABLE,
+    /**
+     * @brief word preedit mode
+     * An option to use word length preedit text.
+     */
+    PREEDIT_MODE_WORD,
+} IBusHangulPreeditMode;
+
 struct _IBusHangulEngine {
     IBusEngineSimple parent;
 
@@ -53,6 +77,9 @@ struct _IBusHangulEngine {
 
     HangulInputContext *context;
     UString* preedit;
+    /* Every instance's preedit_mode may be different from global settings.
+     * So we need a value for each instance. */
+    IBusHangulPreeditMode preedit_mode;
     int input_mode;
     unsigned int input_purpose;
     gboolean hanja_mode;
@@ -152,6 +179,8 @@ static void ibus_hangul_engine_clear_preedit_text
                                             (IBusHangulEngine       *hangul);
 static void ibus_hangul_engine_update_preedit_text
                                             (IBusHangulEngine       *hangul);
+static void ibus_hangul_engine_process_commit_and_edit
+                                            (IBusHangulEngine       *hangul);
 
 static void ibus_hangul_engine_update_lookup_table
                                             (IBusHangulEngine       *hangul);
@@ -220,8 +249,16 @@ static gboolean disable_latin_mode = FALSE;
 static int initial_input_mode = INPUT_MODE_LATIN;
 /**
  * whether to use event forwarding workaround
+ * See: https://github.com/libhangul/ibus-hangul/issues/42
  */
 static gboolean use_event_forwarding = TRUE;
+
+/**
+ * global preedit mode
+ * This option may have a value, one of the IBusHangulPreeditMode.
+ * See: https://github.com/libhangul/ibus-hangul/issues/69
+ */
+static IBusHangulPreeditMode global_preedit_mode = PREEDIT_MODE_SYLLABLE;
 
 
 static glong
@@ -357,6 +394,19 @@ ibus_hangul_init (IBusBus *bus)
         g_clear_pointer (&value, g_variant_unref);
     }
 
+    value = g_settings_get_value (settings_hangul, "preedit-mode");
+    if (value != NULL) {
+        const gchar* str = g_variant_get_string (value, NULL);
+        if (strcmp(str, "none") == 0) {
+            global_preedit_mode = PREEDIT_MODE_NONE;
+        } else if (strcmp(str, "word") == 0) {
+            global_preedit_mode = PREEDIT_MODE_WORD;
+        } else {
+            global_preedit_mode = PREEDIT_MODE_SYLLABLE;
+        }
+        g_clear_pointer (&value, g_variant_unref);
+    }
+
     value = g_settings_get_value (settings_panel, "lookup-table-orientation");
     if (value != NULL) {
         lookup_table_orientation = g_variant_get_int32(value);
@@ -396,6 +446,19 @@ ibus_hangul_exit (void)
     hangul_keyboard = NULL;
 }
 
+/*
+static void
+ibus_hangul_engine_set_surrounding_text (IBusEngine     *engine,
+                                         IBusText       *text,
+                                         guint           cursor_index,
+                                         guint           anchor_pos)
+
+{
+    g_debug ("set_surrounding_text: %s %d %d",
+            ibus_text_get_text (text), cursor_index, anchor_pos);
+}
+*/
+
 static void
 ibus_hangul_engine_class_init (IBusHangulEngineClass *klass)
 {
@@ -427,6 +490,7 @@ ibus_hangul_engine_class_init (IBusHangulEngineClass *klass)
     engine_class->property_activate = ibus_hangul_engine_property_activate;
 
     engine_class->candidate_clicked = ibus_hangul_engine_candidate_clicked;
+    //engine_class->set_surrounding_text = ibus_hangul_engine_set_surrounding_text;
     engine_class->set_content_type = ibus_hangul_engine_set_content_type;
 }
 
@@ -446,6 +510,7 @@ ibus_hangul_engine_init (IBusHangulEngine *hangul)
                                 ibus_hangul_engine_on_transition, hangul);
 
     hangul->preedit = ustring_new();
+    hangul->preedit_mode = global_preedit_mode;
     hangul->hanja_list = NULL;
     hangul->input_mode = initial_input_mode;
     hangul->input_purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
@@ -546,6 +611,11 @@ ibus_hangul_engine_destroy (IBusHangulEngine *hangul)
         hangul->prop_list = NULL;
     }
 
+    if (hangul->preedit != NULL) {
+        ustring_delete (hangul->preedit);
+        hangul->preedit = NULL;
+    }
+
     if (hangul->table) {
         g_object_unref (hangul->table);
         hangul->table = NULL;
@@ -567,6 +637,70 @@ ibus_hangul_engine_destroy (IBusHangulEngine *hangul)
     IBUS_OBJECT_CLASS (parent_class)->destroy ((IBusObject *)hangul);
 }
 
+/**
+ * @brief a function to check whether the caret has moved
+ *
+ * An ibus client should inform to the engine that the caret has moved
+ * by calling reset method. But many implementations don't follow this rule.
+ * So we need to check whether the caret pos is changed.
+ * If so, we will reset the context.
+ *
+ * Usually we don't need this function. Only when the preedit mode is
+ * PREEDIT_MODE_NONE, it is critical to have same surrounding text and
+ * internal cached preedit text.
+ */
+static void
+ibus_hangul_engine_check_caret_pos_sanity (IBusHangulEngine *hangul)
+{
+    size_t preedit_len = ustring_length (hangul->preedit);
+    if (preedit_len == 0)
+        return;
+
+    IBusText* ibus_text = NULL;
+    guint cursor_pos = 0;
+    guint anchor_pos = 0;
+    ibus_engine_get_surrounding_text ((IBusEngine *)hangul,
+            &ibus_text, &cursor_pos, &anchor_pos);
+
+    const gchar* text = ibus_text_get_text (ibus_text);
+    if (text == NULL || cursor_pos == 0)
+        return;
+
+    const gchar* text_on_cursor = g_utf8_offset_to_pointer (text, cursor_pos - 1);
+    gchar* preedit_utf8 = ustring_to_utf8 (hangul->preedit, -1);
+    if (preedit_utf8 == NULL) {
+        g_object_unref (ibus_text);
+        return;
+    }
+
+    size_t n = strlen(preedit_utf8);
+    // Ok, Just comparing text value is not perfect. But any other idea?
+    if (strncmp(preedit_utf8, text_on_cursor, n) != 0) {
+        // If the text_on_cursor is different from preedit cache, there's a possibility
+        // that the cursor was moved by the user. Then we need to reset the context.
+        hangul_ic_reset (hangul->context);
+        ustring_clear (hangul->preedit);
+    }
+    g_free (preedit_utf8);
+
+    g_object_unref (ibus_text);
+}
+
+static void
+ibus_hangul_engine_update_preedit_mode (IBusHangulEngine *hangul)
+{
+    if (global_preedit_mode == PREEDIT_MODE_NONE &&
+        !(hangul->caps & IBUS_CAP_SURROUNDING_TEXT)) {
+        // If an instance doesn't support surrounding text, ibus-hangul will change
+        // preedit mode of this instance to PREEDIT_MODE_SYLLABLE.
+        // Because without surrounding text feature, users cannot see "composing text".
+        // This is pretty inconvenient for korean users.
+        hangul->preedit_mode = PREEDIT_MODE_SYLLABLE;
+    } else {
+        hangul->preedit_mode = global_preedit_mode;
+    }
+}
+
 static void
 ibus_hangul_engine_clear_preedit_text (IBusHangulEngine *hangul)
 {
@@ -583,6 +717,10 @@ ibus_hangul_engine_update_preedit_text (IBusHangulEngine *hangul)
     IBusText *text;
     UString *preedit;
     gint preedit_len;
+
+    if (hangul->preedit_mode == PREEDIT_MODE_NONE) {
+        return;
+    }
 
     // ibus-hangul's preedit string is made up of ibus context's
     // internal preedit string and libhangul's preedit string.
@@ -622,6 +760,77 @@ ibus_hangul_engine_update_preedit_text (IBusHangulEngine *hangul)
     }
 
     ustring_delete(preedit);
+}
+
+static void
+ibus_hangul_engine_process_commit_and_edit (IBusHangulEngine *hangul)
+{
+    // commit current commit_text + preedit_text
+    const ucschar *hic_commit_text = hangul_ic_get_commit_string (hangul->context);
+    const ucschar *hic_preedit_text = hangul_ic_get_preedit_string (hangul->context);
+
+    UString *commit_text = ustring_new ();
+    ustring_append_ucs4 (commit_text, hic_commit_text, -1);
+    ustring_append_ucs4 (commit_text, hic_preedit_text, -1);
+
+    // commit only when the final result is different from preedit text cache
+    if (ustring_compare (commit_text, hangul->preedit) != 0) {
+        IBusEngine *engine = (IBusEngine *)hangul;
+
+        // remove composing text
+        guint preedit_text_len = ustring_length (hangul->preedit);
+        ibus_engine_delete_surrounding_text (engine, -preedit_text_len, preedit_text_len);
+
+        const ucschar *s = ustring_begin (commit_text);
+        IBusText *text = ibus_text_new_from_ucs4 (s);
+        ibus_engine_commit_text (engine, text);
+    }
+
+    ustring_delete (commit_text);
+
+    // update preedit_text cache
+    ustring_clear (hangul->preedit);
+    ustring_append_ucs4 (hangul->preedit, hic_preedit_text, -1);
+}
+
+static void
+ibus_hangul_engine_process_edit_and_commit (IBusHangulEngine *hangul)
+{
+    IBusEngine *engine = (IBusEngine *)hangul;
+
+    const ucschar *hic_commit_text = hangul_ic_get_commit_string (hangul->context);
+    const ucschar *hic_preedit_text = hangul_ic_get_preedit_string (hangul->context);
+
+    if (hangul->preedit_mode == PREEDIT_MODE_WORD || hangul->hanja_mode) {
+        ustring_append_ucs4 (hangul->preedit, hic_commit_text, -1);
+
+        if (hic_preedit_text == NULL || hic_preedit_text[0] == 0) {
+            if (ustring_length (hangul->preedit) > 0) {
+                IBusText *text;
+                const ucschar* preedit_text;
+
+                /* clear preedit text before commit */
+                ibus_hangul_engine_clear_preedit_text (hangul);
+
+                preedit_text = ustring_begin (hangul->preedit);
+                text = ibus_text_new_from_ucs4 ((gunichar*)preedit_text);
+                ibus_engine_commit_text (engine, text);
+                ustring_clear (hangul->preedit);
+            }
+        }
+    } else {
+        if (hic_commit_text != NULL && hic_commit_text[0] != 0) {
+            IBusText *text;
+
+            /* clear preedit text before commit */
+            ibus_hangul_engine_clear_preedit_text (hangul);
+
+            text = ibus_text_new_from_ucs4 (hic_commit_text);
+            ibus_engine_commit_text (engine, text);
+        }
+    }
+
+    ibus_hangul_engine_update_preedit_text (hangul);
 }
 
 static void
@@ -689,7 +898,17 @@ ibus_hangul_engine_commit_current_candidate (IBusHangulEngine *hangul)
         /* remove hic preedit text */
         if (hic_preedit_len > 0) {
             hangul_ic_reset (hangul->context);
-            key_len -= hic_preedit_len;
+            if (hangul->preedit_mode == PREEDIT_MODE_NONE) {
+                if (preedit_len > hic_preedit_len) {
+                    guint pos = preedit_len - hic_preedit_len;
+                    ustring_erase (hangul->preedit, pos, hic_preedit_len);
+                } else {
+                    ustring_clear (hangul->preedit);
+                }
+                preedit_len = ustring_length(hangul->preedit);
+            } else {
+                key_len -= hic_preedit_len;
+            }
         }
 
         /* remove ibus preedit text */
@@ -794,7 +1013,7 @@ ibus_hangul_engine_update_hanja_list (IBusHangulEngine *hangul)
     gchar* hanja_key;
     gchar* preedit_utf8;
     const ucschar* hic_preedit;
-    UString* preedit;
+    UString* preedit = NULL;
     int lookup_method;
     IBusText* ibus_text = NULL;
     guint cursor_pos = 0;
@@ -810,12 +1029,14 @@ ibus_hangul_engine_update_hanja_list (IBusHangulEngine *hangul)
     hanja_key = NULL;
     lookup_method = LOOKUP_METHOD_PREFIX;
 
-    preedit = ustring_dup (hangul->preedit);
-    ustring_append_ucs4 (preedit, hic_preedit, -1);
+    if (hangul->preedit_mode != PREEDIT_MODE_NONE) {
+        preedit = ustring_dup (hangul->preedit);
+        ustring_append_ucs4 (preedit, hic_preedit, -1);
+    }
 
-    if (ustring_length(preedit) > 0) {
+    if (preedit != NULL && ustring_length(preedit) > 0) {
         preedit_utf8 = ustring_to_utf8 (preedit, -1);
-        if (word_commit || hangul->hanja_mode) {
+        if (hangul->preedit_mode == PREEDIT_MODE_WORD || hangul->hanja_mode) {
             hanja_key = preedit_utf8;
             lookup_method = LOOKUP_METHOD_PREFIX;
         } else {
@@ -856,7 +1077,8 @@ ibus_hangul_engine_update_hanja_list (IBusHangulEngine *hangul)
         g_free (hanja_key);
     }
 
-    ustring_delete (preedit);
+    if (preedit != NULL)
+        ustring_delete (preedit);
 
     if (ibus_text != NULL)
         g_object_unref (ibus_text);
@@ -1067,7 +1289,6 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 
     guint mask;
     gboolean retval;
-    const ucschar *str;
 
     if (modifiers & IBUS_RELEASE_MASK)
         return FALSE;
@@ -1154,6 +1375,10 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         return FALSE;
     }
 
+    if (hangul->preedit_mode == PREEDIT_MODE_NONE) {
+        ibus_hangul_engine_check_caret_pos_sanity (hangul);
+    }
+
     if (keyval == IBUS_BackSpace) {
         retval = hangul_ic_backspace (hangul->context);
         if (!retval) {
@@ -1164,7 +1389,11 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
             }
         }
 
-        ibus_hangul_engine_update_preedit_text (hangul);
+        if (hangul->preedit_mode == PREEDIT_MODE_NONE) {
+            ibus_hangul_engine_process_commit_and_edit (hangul);
+        } else {
+            ibus_hangul_engine_update_preedit_text (hangul);
+        }
 
         if (hangul->hanja_mode) {
             if (ibus_hangul_engine_has_preedit (hangul)) {
@@ -1199,41 +1428,11 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
         }
         retval = hangul_ic_process (hangul->context, keyval);
 
-        str = hangul_ic_get_commit_string (hangul->context);
-        if (word_commit || hangul->hanja_mode) {
-            const ucschar* hic_preedit;
-
-            hic_preedit = hangul_ic_get_preedit_string (hangul->context);
-            if (hic_preedit != NULL && hic_preedit[0] != 0) {
-                ustring_append_ucs4 (hangul->preedit, str, -1);
-            } else {
-                IBusText *text;
-                const ucschar* preedit;
-
-                ustring_append_ucs4 (hangul->preedit, str, -1);
-                if (ustring_length (hangul->preedit) > 0) {
-                    /* clear preedit text before commit */
-                    ibus_hangul_engine_clear_preedit_text (hangul);
-
-                    preedit = ustring_begin (hangul->preedit);
-                    text = ibus_text_new_from_ucs4 ((gunichar*)preedit);
-                    ibus_engine_commit_text (engine, text);
-                }
-                ustring_clear (hangul->preedit);
-            }
+        if (hangul->preedit_mode == PREEDIT_MODE_NONE) {
+            ibus_hangul_engine_process_commit_and_edit (hangul);
         } else {
-            if (str != NULL && str[0] != 0) {
-                IBusText *text;
-
-                /* clear preedit text before commit */
-                ibus_hangul_engine_clear_preedit_text (hangul);
-
-                text = ibus_text_new_from_ucs4 (str);
-                ibus_engine_commit_text (engine, text);
-            }
+            ibus_hangul_engine_process_edit_and_commit (hangul);
         }
-
-        ibus_hangul_engine_update_preedit_text (hangul);
 
         if (hangul->hanja_mode) {
             ibus_hangul_engine_update_lookup_table (hangul);
@@ -1332,6 +1531,8 @@ ibus_hangul_engine_focus_in (IBusEngine *engine)
 
     //g_debug ("focus_in: %u", hangul->id);
 
+    ibus_hangul_engine_update_preedit_mode (hangul);
+
     if (hangul->input_mode == INPUT_MODE_HANGUL) {
         ibus_property_set_state (hangul->prop_hangul_mode, PROP_STATE_CHECKED);
     } else {
@@ -1368,6 +1569,7 @@ ibus_hangul_engine_focus_out (IBusEngine *engine)
 	// the preedit string committed automatically when the focus is out.
 	// So we don't need to commit the preedit here.
 	hangul_ic_reset (hangul->context);
+        ustring_clear (hangul->preedit);
     } else {
         ibus_engine_hide_lookup_table (engine);
         ibus_engine_hide_auxiliary_text (engine);
@@ -1382,6 +1584,11 @@ ibus_hangul_engine_reset (IBusEngine *engine)
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
     g_debug ("reset:%u", hangul->id);
+
+    if (hangul->preedit_mode == PREEDIT_MODE_NONE) {
+        hangul_ic_reset (hangul->context);
+        ustring_clear (hangul->preedit);
+    }
 
     ibus_hangul_engine_flush (hangul);
     IBUS_ENGINE_CLASS (parent_class)->reset (engine);
@@ -1412,6 +1619,8 @@ ibus_hangul_engine_set_capabilities (IBusEngine *engine, guint caps)
     IBusHangulEngine *hangul = (IBusHangulEngine *) engine;
 
     hangul->caps = caps;
+
+    ibus_hangul_engine_update_preedit_mode (hangul);
 
     g_debug ("set_capabilities:%u: %x", hangul->id, caps);
 }
@@ -1648,6 +1857,16 @@ settings_changed (GSettings    *settings,
             print_changed_settings (schema_id, key, value);
         } else if (strcmp (key, "use-event-forwarding") == 0) {
             use_event_forwarding = g_variant_get_boolean (value);
+            print_changed_settings (schema_id, key, value);
+        } else if (strcmp (key, "preedit-mode") == 0) {
+            const gchar* str = g_variant_get_string (value, NULL);
+            if (strcmp(str, "none") == 0) {
+                global_preedit_mode = PREEDIT_MODE_NONE;
+            } else if (strcmp(str, "word") == 0) {
+                global_preedit_mode = PREEDIT_MODE_WORD;
+            } else {
+                global_preedit_mode = PREEDIT_MODE_SYLLABLE;
+            }
             print_changed_settings (schema_id, key, value);
         }
     } else if (strcmp (schema_id, "org.freedesktop.ibus.panel") == 0) {

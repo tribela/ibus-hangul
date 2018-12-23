@@ -52,5 +52,15 @@
       <summary>Enable event forwarding workaround</summary>
       <description></description>
     </key>
+    <key name="preedit-mode" type="s">
+      <choices>
+	<choice value="none" />
+	<choice value="syllable" />
+	<choice value="word" />
+      </choices>
+      <default>'syllable'</default>
+      <summary>Preedit mode</summary>
+      <description></description>
+    </key>
   </schema>
 </schemalist>

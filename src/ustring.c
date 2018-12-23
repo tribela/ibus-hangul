@@ -114,3 +114,19 @@ ustring_to_utf8(const UString* str, guint len)
 	len = str->len;
     return g_ucs4_to_utf8((const gunichar*)str->data, len, NULL, NULL, NULL);
 }
+
+int
+ustring_compare(const UString* str, const UString* other)
+{
+    const ucschar* p1 = (const ucschar*)str->data;
+    const ucschar* p2 = (const ucschar*)other->data;
+
+    while (*p1 != 0 && *p2 != 0) {
+        if (*p1 != *p2)
+            break;
+        ++p1;
+        ++p2;
+    }
+
+    return *p1 - *p2;
+}

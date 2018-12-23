@@ -45,4 +45,6 @@ UString* ustring_append_utf8(UString* str, const char* utf8);
 
 gchar*   ustring_to_utf8(const UString* str, guint len);
 
+int      ustring_compare(const UString* str, const UString* other);
+
 #endif // nabi_ustring_h
