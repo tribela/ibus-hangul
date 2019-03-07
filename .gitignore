@@ -35,9 +35,6 @@ stamp-h1
 py-compile
 ibus-hangul*.tar.*
 ibus-hangul.spec
-intltool-extract.in
-intltool-merge.in
-intltool-update.in
 
 # vim temp backup file
 .*.swp
@@ -49,7 +46,6 @@ data/org.freedesktop.ibus.engine.hangul.metainfo.xml.h
 # files for po
 po/*.gmo
 po/*.pot
-po/.intltool-merge-cache
 po/stamp-po
 po/stamp-it
 

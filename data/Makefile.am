@@ -32,9 +32,12 @@ symboltable_DATA = \
 symboltabledir = $(datadir)/ibus-hangul/data
 
 appstream_in_files = org.freedesktop.ibus.engine.hangul.metainfo.xml.in
-appstream_DATA = $(appstream_in_files:.xml.in=.xml)
+appstream_files = $(appstream_in_files:.xml.in=.xml)
+appstream_DATA = $(appstream_files)
 appstreamdir=$(datadir)/metainfo
-@INTLTOOL_XML_RULE@
+
+$(appstream_files): $(appstream_in_files) Makefile
+	$(AM_V_GEN)$(MSGFMT) --xml --template $< -d $(top_srcdir)/po -o $@
 
 install-data-hook:
 	if test -z "$(DESTDIR)"; then \
