@@ -31,9 +31,12 @@ setup_hanguldir = $(pkgdatadir)/setup
 libexec_SCRIPTS = ibus-setup-hangul
 
 desktop_in_files = ibus-setup-hangul.desktop.in
-desktop_DATA = ibus-setup-hangul.desktop
+desktop_files = $(desktop_in_files:.desktop.in=.desktop)
+desktop_DATA = $(desktop_files)
 desktopdir = $(datadir)/applications
-@INTLTOOL_DESKTOP_RULE@
+
+$(desktop_files): $(desktop_in_files) Makefile
+	$(AM_V_GEN)$(MSGFMT) --desktop --template $< -d $(top_srcdir)/po -o $@
 
 hicolor_icon_64_DATA = ibus-setup-hangul.png
 hicolor_icon_64dir = $(datadir)/icons/hicolor/64x64/apps

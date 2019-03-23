@@ -4,11 +4,9 @@
   <name>ibus-hangul</name>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2</project_license>
-  <_summary>Hangul engine for IBus</_summary>
+  <summary>Hangul engine for IBus</summary>
   <description>
-    <_p>
- IBus-Hangul is a Korean input method engine for IBus.
-    </_p>
+    <p>IBus-Hangul is a Korean input method engine for IBus.</p>
   </description>
   <project_group>IBus</project_group>
   <url type="homepage">https://github.com/libhangul/ibus-hangul</url>
