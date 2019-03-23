@@ -87,7 +87,7 @@ start_component (void)
                                     "0.1.0",
                                     "GPL",
                                     "Peng Huang <shawn.p.huang@gmail.com>",
-                                    "http://code.google.com/p/ibus/",
+                                    "https://github.com/libhangul/ibus-hangul",
                                     "",
                                     "ibus-hangul");
     ibus_component_add_engine (component,
