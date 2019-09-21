@@ -22,6 +22,7 @@
 #include <config.h>
 #endif
 
+#include <stdio.h>
 #include <ibus.h>
 #include <gio/gio.h>
 #include <hangul.h>
@@ -252,6 +253,11 @@ static int initial_input_mode = INPUT_MODE_LATIN;
  * See: https://github.com/libhangul/ibus-hangul/issues/42
  */
 static gboolean use_event_forwarding = TRUE;
+/**
+ * whether to use client commit
+ * See: https://github.com/libhangul/ibus-hangul/pull/68
+ */
+static gboolean use_client_commit = FALSE;
 
 /**
  * global preedit mode
@@ -268,6 +274,53 @@ ucschar_strlen (const ucschar* str)
     while (*p != 0)
         p++;
     return p - str;
+}
+
+static gboolean
+ibus_hangul_check_ibus_version (const gchar *version,
+                                gint required_major,
+                                gint required_minor,
+                                gint required_micro)
+{
+    gint len = 0;
+    gint major = 0, minor = 0, micro = 0;
+
+    gchar **versions = g_strsplit_set (version, ".", 3);
+    len = g_strv_length (versions);
+    major = atoi (versions[0]);
+    minor = atoi (versions[1]);
+    micro = atoi (versions[2]);
+    g_strfreev (versions);
+    if (len != 3)
+        return FALSE;
+
+    return major > required_major ||
+        (major == required_major && minor > required_minor) ||
+        (major == required_major && minor == required_minor &&
+         micro >= required_micro);
+}
+
+static gboolean
+check_client_commit ()
+{
+    gboolean client_commit = FALSE;
+    gboolean retval;
+    gchar *standard_output = NULL;
+    gchar version[256];
+
+    retval = g_spawn_command_line_sync ("ibus version", &standard_output,
+                                        NULL, NULL, NULL);
+    if (!retval)
+        return client_commit;
+
+    sscanf (standard_output, "IBus %255s", version);
+    g_free (standard_output);
+
+    client_commit = ibus_hangul_check_ibus_version (version, 1, 5, 20);
+
+    g_debug ("client_commit: %d", client_commit);
+
+    return client_commit;
 }
 
 GType
@@ -414,6 +467,7 @@ ibus_hangul_init (IBusBus *bus)
     }
 
     keymap = ibus_keymap_get("us");
+    use_client_commit = check_client_commit ();
 
     g_debug ("init");
 }
@@ -1590,7 +1644,17 @@ ibus_hangul_engine_reset (IBusEngine *engine)
         ustring_clear (hangul->preedit);
     }
 
+    if (use_client_commit) {
+        // ibus-hangul uses
+        // ibus_engine_update_preedit_text_with_mode() function which makes
+        // the preedit string committed automatically when the reset is received
+        // So we don't need to commit the preedit here.
+        hangul_ic_reset (hangul->context);
+        ustring_clear (hangul->preedit);
+    }
+
     ibus_hangul_engine_flush (hangul);
+
     IBUS_ENGINE_CLASS (parent_class)->reset (engine);
 }
 
