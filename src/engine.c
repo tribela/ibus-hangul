@@ -1382,6 +1382,7 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
 
     guint mask;
     gboolean retval;
+    guint orig_keyval = keyval;
 
     if (modifiers & IBUS_RELEASE_MASK)
         return FALSE;
@@ -1580,7 +1581,7 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
      */
     if (use_event_forwarding) {
         if (!retval) {
-            ibus_engine_forward_key_event (engine, keyval, keycode, modifiers);
+            ibus_engine_forward_key_event (engine, orig_keyval, keycode, modifiers);
         }
 
         return TRUE;
