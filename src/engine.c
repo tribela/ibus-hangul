@@ -1826,6 +1826,11 @@ ibus_hangul_engine_switch_input_mode (IBusHangulEngine *hangul)
         input_mode = INPUT_MODE_HANGUL;
     }
 
+    if (hangul->preedit_mode == PREEDIT_MODE_NONE) {
+        hangul_ic_reset (hangul->context);
+        ustring_clear (hangul->preedit);
+    }
+
     ibus_hangul_engine_set_input_mode (hangul, input_mode);
 }
 
