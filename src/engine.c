@@ -324,13 +324,11 @@ check_ibus_version ()
     ibus_version[2] = version[2];
     g_debug ("ibus version detected: %d.%d.%d",
             ibus_version[0], ibus_version[1], ibus_version[2]);
-    exit(0);
     return;
 
 fail:
     g_debug ("ibus version detection failed: use default value: %d.%d.%d",
             ibus_version[0], ibus_version[1], ibus_version[2]);
-    exit(-1);
 }
 
 static gboolean
