@@ -64,6 +64,11 @@ PKG_CHECK_MODULES(HANGUL, [
     libhangul >= 0.1.0
 ])
 
+# check gtk
+PKG_CHECK_MODULES(GTK, [
+    gtk+-3.0 >= 3.0.0
+])
+
 # check env
 AC_PATH_PROG(ENV_PROG, env)
 AC_SUBST(ENV_PROG)
@@ -84,6 +89,18 @@ AC_DEFINE_UNQUOTED(
     [Define to the read-only architecture-independent data directory.]
 )
 
+# --enable-installed-tests
+AC_ARG_ENABLE(installed-tests,
+    AS_HELP_STRING([--enable-installed-tests],
+                   [Enable to installed tests]),
+    [enable_installed_tests=$enableval],
+    [enable_installed_tests=no]
+)
+AM_CONDITIONAL([ENABLE_INSTALLED_TESTS], [test x"$enable_installed_tests" = x"yes"])
+if test x"$enable_installed_tests" = x"no"; then
+    enable_installed_tests="no (disabled, use --enable-installed-tests to enable)"
+fi
+
 # OUTPUT files
 AC_CONFIG_FILES([
 po/Makefile.in
@@ -91,6 +108,7 @@ Makefile
 ibus-hangul.spec
 src/Makefile
 src/hangul.xml.in
+tests/Makefile
 setup/Makefile
 icons/Makefile
 data/Makefile
