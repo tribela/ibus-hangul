@@ -24,7 +24,7 @@ TESTS = \
 
 CLEANFILES = $(test_metas)
 
-EXTRA_DIST = $(test_metas_in)
+EXTRA_DIST = $(test_metas_in) runtest
 
 noinst_PROGRAMS = $(TESTS)
 
@@ -37,9 +37,11 @@ TESTS_ENVIRONMENT = \
     DISABLE_GUI_TESTS="$(DISABLE_GUI_TESTS)" \
     $(NULL)
 
+LOG_COMPILER = $(srcdir)/runtest
+test_metas_in = meta.test.in
+
 if ENABLE_INSTALLED_TESTS
 test_execs = ibus-hangul
-test_metas_in = meta.test.in
 test_metas = $(addsuffix .test, $(test_execs))
 test_sources_DATA = $(test_metas)
 test_sourcesdir = $(datadir)/installed-tests/ibus-hangul

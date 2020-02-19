@@ -36,6 +36,9 @@ make DESTDIR=${RPM_BUILD_ROOT} install
 
 %find_lang %{name}
 
+%check
+make check DISABLE_GUI_TESTS=ibus-hangul
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
