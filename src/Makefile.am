@@ -28,6 +28,27 @@ AM_LDFLAGS = \
 	@HANGUL_LIBS@ \
 	$(NULL)
 
+noinst_LIBRARIES = \
+	libinternal.a
+	$(NULL)
+
+libinternal_a_SOURCES = \
+	engine.c \
+	engine.h \
+	ustring.c \
+	ustring.h \
+	i18n.h \
+	$(NULL)
+
+libinternal_a_CFLAGS = \
+	@IBUS_CFLAGS@ \
+	@HANGUL_CFLAGS@ \
+	-DPKGDATADIR=\"$(pkgdatadir)\" \
+	-DLOCALEDIR=\"$(localedir)\" \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-DIBUSHANGUL_DATADIR=\"$(datadir)/ibus-hangul\" \
+	$(NULL)
+
 check_PROGRAMS = \
 	test-ustring
 	$(NULL)
@@ -40,11 +61,6 @@ libexec_PROGRAMS = ibus-engine-hangul
 
 ibus_engine_hangul_SOURCES = \
 	main.c \
-	engine.c \
-	engine.h \
-	ustring.c \
-	ustring.h \
-	i18n.h \
 	$(NULL)
 
 ibus_engine_hangul_CFLAGS = \
@@ -57,6 +73,7 @@ ibus_engine_hangul_CFLAGS = \
 	$(NULL)
 
 ibus_engine_hangul_LDADD = \
+	libinternal.a \
 	@IBUS_LIBS@ \
 	@HANGUL_LIBS@ \
 	$(NULL)

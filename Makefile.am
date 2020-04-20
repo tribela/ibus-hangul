@@ -20,6 +20,7 @@
 
 SUBDIRS = \
 	src \
+	tests \
 	setup \
 	icons \
 	data \
