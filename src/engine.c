@@ -1577,7 +1577,11 @@ ibus_hangul_engine_process_key_event (IBusEngine     *engine,
      *
      * See: https://github.com/choehwanjin/ibus-hangul/issues/40
      */
-    if (use_event_forwarding) {
+    if (use_event_forwarding
+#if IBUS_CHECK_VERSION(1, 5, 27)
+        && !(hangul->caps & IBUS_CAP_SYNC_PROCESS_KEY)
+#endif
+        ) {
         if (!retval) {
             ibus_engine_forward_key_event (engine, orig_keyval, keycode, modifiers);
         }
